@@ -1,0 +1,85 @@
+-- 1. Таблица ролей
+CREATE TABLE roles (
+    id smallserial PRIMARY KEY,
+    name varchar(50) NOT NULL UNIQUE,       -- 'admin', 'user', 'moderator'
+    description text NULL
+);
+
+-- 2. НОВАЯ ТАБЛИЦА: Атомарные привилегии (разрешения)
+CREATE TABLE permissions (
+    id smallserial PRIMARY KEY,
+    name varchar(50) NOT NULL UNIQUE,       -- 'article:create', 'article:delete'
+    description varchar(255) NULL
+);
+
+-- 3. НОВАЯ ТАБЛИЦА: Связующая таблица (Каждой роли — свой набор прав)
+CREATE TABLE role_permission (
+    role_id integer NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
+    permission_id integer NOT NULL REFERENCES permissions(id) ON DELETE CASCADE,
+    PRIMARY KEY (role_id, permission_id)
+);
+
+-- 4. Пользователи
+CREATE TABLE users (
+    id serial PRIMARY KEY,
+    name varchar(100) NOT NULL,
+    role_id integer NOT NULL REFERENCES roles(id),
+    email varchar(150) NOT NULL UNIQUE,
+    password_hash varchar(255) NOT NULL
+);
+
+-- 5. Категории
+CREATE TABLE categories (
+    id serial PRIMARY KEY,
+    name varchar(100) NOT NULL UNIQUE,
+    description text NULL
+);
+
+-- 6. Статьи
+CREATE TABLE articles (
+    id serial PRIMARY KEY,
+    title varchar(255) NOT NULL,
+    content text NOT NULL,
+    created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    author_id integer NOT NULL REFERENCES users(id)
+);
+
+-- 7. Связующая таблица (Статьи <-> Категории)
+CREATE TABLE article_category (
+    article_id integer NOT NULL REFERENCES articles(id) ON DELETE CASCADE,
+    category_id integer NOT NULL REFERENCES categories(id) ON DELETE RESTRICT,
+    PRIMARY KEY (article_id, category_id)
+);
+
+-- 8. История изменений
+CREATE TABLE history_of_changes (
+    id bigserial PRIMARY KEY,
+    article_id integer NOT NULL REFERENCES articles(id) ON DELETE CASCADE,
+    old_content text NOT NULL,
+    editor_id integer NOT NULL REFERENCES users(id),
+    changed_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+
+--------------
+-- Шаг 1: Создаем базовые роли
+INSERT INTO roles (name, description) VALUES 
+('admin', 'Администратор с полным доступом к управлению контентом'),
+('user', 'Рядовой пользователь с правом только на чтение');
+
+-- Шаг 2: Создаем атомарные привилегии
+INSERT INTO permissions (name, description) VALUES 
+('article:read', 'Право на просмотр статей'),
+('article:create', 'Право на создание новых статей'),
+('article:edit', 'Право на редактирование статей'),
+('article:delete', 'Право на удаление статей');
+
+-- Шаг 3: Связываем роли и привилегии (role_id и permission_id)
+-- Даем админу (id: 1) ВСЕ права (id: 1, 2, 3, 4)
+INSERT INTO role_permission (role_id, permission_id) VALUES 
+(1, 1), (1, 2), (1, 3), (1, 4);
+
+-- Даем обычному пользователю (id: 2) только чтение (id: 1)
+INSERT INTO role_permission (role_id, permission_id) VALUES 
+(2, 1);
