@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "/home/v.kapustin@PSO.LOCAL/Desktop/EGOVapp/EGOV/backend/backend.csproj": {}
+    "/home/v.kapustin@PSO.LOCAL/Desktops/Desktop1/EGOVapp/EGOV/backend/backend.csproj": {}
   },
   "projects": {
-    "/home/v.kapustin@PSO.LOCAL/Desktop/EGOVapp/EGOV/backend/backend.csproj": {
+    "/home/v.kapustin@PSO.LOCAL/Desktops/Desktop1/EGOVapp/EGOV/backend/backend.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/home/v.kapustin@PSO.LOCAL/Desktop/EGOVapp/EGOV/backend/backend.csproj",
+        "projectUniqueName": "/home/v.kapustin@PSO.LOCAL/Desktops/Desktop1/EGOVapp/EGOV/backend/backend.csproj",
         "projectName": "backend",
-        "projectPath": "/home/v.kapustin@PSO.LOCAL/Desktop/EGOVapp/EGOV/backend/backend.csproj",
+        "projectPath": "/home/v.kapustin@PSO.LOCAL/Desktops/Desktop1/EGOVapp/EGOV/backend/backend.csproj",
         "packagesPath": "/home/v.kapustin@PSO.LOCAL/.nuget/packages/",
-        "outputPath": "/home/v.kapustin@PSO.LOCAL/Desktop/EGOVapp/EGOV/backend/obj/",
+        "outputPath": "/home/v.kapustin@PSO.LOCAL/Desktops/Desktop1/EGOVapp/EGOV/backend/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "/home/v.kapustin@PSO.LOCAL/.nuget/NuGet/NuGet.Config"
@@ -38,6 +38,14 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "dependencies": {
+            "Microsoft.EntityFrameworkCore": {
+              "target": "Package",
+              "version": "[8.0.27, )"
+            },
+            "Npgsql.EntityFrameworkCore.PostgreSQL": {
+              "target": "Package",
+              "version": "[8.0.11, )"
+            },
             "Swashbuckle.AspNetCore": {
               "target": "Package",
               "version": "[6.6.2, )"
