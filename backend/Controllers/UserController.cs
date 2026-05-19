@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Egov.Models;
 using Egov.Data;
-using BCrypt.Net;
+using Egov.DTOs;
 
 namespace Egov.Controllers;
 
@@ -18,24 +18,26 @@ public class UserController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<User>>> GetUsers()
+    public async Task<ActionResult<IEnumerable<UserReadDto>>> GetUsers()
     {
         var users = await _context.Users
-            .Include(u => u.Role)
+            .Include(u => u.Role) // Подгружаем роль из БД
             .AsNoTracking()
             .ToListAsync();
 
-        foreach (var user in users)
+        var userDtos = users.Select(u => new UserReadDto// Маппинг: перекладываем данные из тяжелых моделей в легкие DTO
         {
-            user.PasswordHash = "********";
-            if (user.Role != null) user.Role.Permissions = null!;
-        }
+            Id = u.Id,
+            Name = u.Name,
+            Email = u.Email,
+            RoleName = u.Role?.Name ?? "Без роли"
+        });
 
-        return users;
+        return Ok(userDtos);
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<User>> GetUser(int id)
+    public async Task<ActionResult<UserReadDto>> GetUser(int id)
     {
         var user = await _context.Users
             .Include(u => u.Role)
@@ -46,23 +48,29 @@ public class UserController : ControllerBase
             return NotFound(new { message = $"Пользователь с ID {id} не найден." });
         }
 
-        user.PasswordHash = "********"; // Скрываем хэш
-        if (user.Role != null) user.Role.Permissions = null!; 
+        // Превращаем в DTO
+        var userDto = new UserReadDto
+        {
+            Id = user.Id,
+            Name = user.Name,
+            Email = user.Email,
+            RoleName = user.Role?.Name ?? "Без роли"
+        };
 
-        return user;
+        return Ok(userDto);
     }
 
     [HttpPost]
-    public async Task<ActionResult<User>> CreateUser(User user)
+    public async Task<ActionResult<UserReadDto>> CreateUser(User user)
     {
         if (string.IsNullOrWhiteSpace(user.Name))
         {
-            return BadRequest(new { message = "Имя пользователя (Name) не может быть пустым." });
+            return BadRequest(new { message = "Имя пользователя не может быть пустым." });
         }
 
         if (string.IsNullOrWhiteSpace(user.Email) || string.IsNullOrWhiteSpace(user.PasswordHash))
         {
-            return BadRequest(new { message = "Email и PasswordHash обязательны для заполнения." });
+            return BadRequest(new { message = "Email и пароль обязательны." });
         }
 
         var emailExists = await _context.Users.AnyAsync(u => u.Email == user.Email);
@@ -74,24 +82,32 @@ public class UserController : ControllerBase
         var roleExists = await _context.Roles.AnyAsync(r => r.Id == user.RoleId);
         if (!roleExists)
         {
-            return BadRequest(new { message = "Указанная роль (RoleId) не существует в системе." });
+            return BadRequest(new { message = "Указанная роль (RoleId) не существует." });
         }
-        
+
         user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(user.PasswordHash);
 
         _context.Users.Add(user);
         await _context.SaveChangesAsync();
 
-        user.PasswordHash = "********";// Перед возвратом скрываем пароль в ответе
+        var savedUser = await _context.Users.Include(u => u.Role).FirstAsync(u => u.Id == user.Id);
 
-        return CreatedAtAction(nameof(GetUser), new { id = user.Id }, user);
+        var responseDto = new UserReadDto
+        {
+            Id = savedUser.Id,
+            Name = savedUser.Name,
+            Email = savedUser.Email,
+            RoleName = savedUser.Role?.Name ?? "Без роли"
+        };
+
+        return CreatedAtAction(nameof(GetUser), new { id = savedUser.Id }, responseDto);
     }
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteUser(int id)
     {
         var user = await _context.Users
-            .Include(u => u.Articles) // Загружаем статьи пользователя, чтобы проверить зависимости
+            .Include(u => u.Articles)
             .FirstOrDefaultAsync(u => u.Id == id);
 
         if (user == null)
@@ -99,23 +115,15 @@ public class UserController : ControllerBase
             return NotFound(new { message = $"Пользователь с ID {id} не найден." });
         }
 
-        //Если у админа есть написанные статьи, его нельзя просто так удалить
         if (user.Articles.Any())
         {
             return BadRequest(new { 
-                message = $"Нельзя удалить пользователя, так как он является автором {user.Articles.Count} статей. Сначала переназначьте автора у этих статей." 
+                message = $"Нельзя удалить автора {user.Articles.Count} статей. Сначала переназначьте их." 
             });
         }
 
-        try
-        {
-            _context.Users.Remove(user);
-            await _context.SaveChangesAsync();
-            return NoContent();
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, new { message = "Внутренняя ошибка сервера при удалении пользователя.", details = ex.Message });
-        }
+        _context.Users.Remove(user);
+        await _context.SaveChangesAsync();
+        return NoContent();
     }
 }
