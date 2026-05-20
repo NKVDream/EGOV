@@ -42,3 +42,12 @@
 /home/v.kapustin@PSO.LOCAL/Desktops/Desktop1/EGOVapp/EGOV/backend/obj/Debug/net8.0/backend.pdb
 /home/v.kapustin@PSO.LOCAL/Desktops/Desktop1/EGOVapp/EGOV/backend/obj/Debug/net8.0/backend.genruntimeconfig.cache
 /home/v.kapustin@PSO.LOCAL/Desktops/Desktop1/EGOVapp/EGOV/backend/obj/Debug/net8.0/ref/backend.dll
+/home/v.kapustin@PSO.LOCAL/Desktops/Desktop1/EGOVapp/EGOV/backend/bin/Debug/net8.0/BCrypt.Net-Next.dll
+/home/v.kapustin@PSO.LOCAL/Desktops/Desktop1/EGOVapp/EGOV/backend/bin/Debug/net8.0/Microsoft.AspNetCore.Authentication.JwtBearer.dll
+/home/v.kapustin@PSO.LOCAL/Desktops/Desktop1/EGOVapp/EGOV/backend/bin/Debug/net8.0/Microsoft.IdentityModel.Abstractions.dll
+/home/v.kapustin@PSO.LOCAL/Desktops/Desktop1/EGOVapp/EGOV/backend/bin/Debug/net8.0/Microsoft.IdentityModel.JsonWebTokens.dll
+/home/v.kapustin@PSO.LOCAL/Desktops/Desktop1/EGOVapp/EGOV/backend/bin/Debug/net8.0/Microsoft.IdentityModel.Logging.dll
+/home/v.kapustin@PSO.LOCAL/Desktops/Desktop1/EGOVapp/EGOV/backend/bin/Debug/net8.0/Microsoft.IdentityModel.Protocols.dll
+/home/v.kapustin@PSO.LOCAL/Desktops/Desktop1/EGOVapp/EGOV/backend/bin/Debug/net8.0/Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
+/home/v.kapustin@PSO.LOCAL/Desktops/Desktop1/EGOVapp/EGOV/backend/bin/Debug/net8.0/Microsoft.IdentityModel.Tokens.dll
+/home/v.kapustin@PSO.LOCAL/Desktops/Desktop1/EGOVapp/EGOV/backend/bin/Debug/net8.0/System.IdentityModel.Tokens.Jwt.dll
