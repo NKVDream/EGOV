@@ -3,6 +3,7 @@ using Egov.Models;
 using Egov.Data;
 using Egov.DTOs;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Egov.Controllers;
 
@@ -17,7 +18,6 @@ public class ArticleController : ControllerBase
         _context = context;
     }
 
-    //Возвращает ArticleReadDto
     [HttpGet]
     public async Task<ActionResult<IEnumerable<ArticleReadDto>>> GetArticles()
     {
@@ -27,7 +27,7 @@ public class ArticleController : ControllerBase
             .AsNoTracking()
             .ToListAsync();
 
-        var articleDtos = articles.Select(a => new ArticleReadDto // Трансформируем модели БД в безопасные DTO
+        var articleDtos = articles.Select(a => new ArticleReadDto
         {
             Id = a.Id,
             Title = a.Title,
@@ -71,15 +71,16 @@ public class ArticleController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "admin")]
     public async Task<ActionResult<ArticleReadDto>> CreateArticle(ArticleCreateDto dto)
     {
-        var author = await _context.Users.FindAsync(dto.AuthorId);// Проверяем автора
+        var author = await _context.Users.FindAsync(dto.AuthorId);
         if (author == null)
         {
             return BadRequest(new { message = "Указанный автор не существует." });
         }
 
-        var article = new Article// Создаем модель статьи из DTO
+        var article = new Article
         {
             Title = dto.Title,
             Content = dto.Content,
@@ -88,7 +89,7 @@ public class ArticleController : ControllerBase
             UpdatedAt = DateTime.UtcNow
         };
 
-        if (dto.CategoryIds.Any())// Подтягиваем категории из БД по переданным ID и связываем со статьей
+        if (dto.CategoryIds.Any())
         {
             var categories = await _context.Categories
                 .Where(c => dto.CategoryIds.Contains(c.Id))
@@ -113,5 +114,78 @@ public class ArticleController : ControllerBase
         };
 
         return CreatedAtAction(nameof(GetArticle), new { id = article.Id }, responseDto);
+    }
+
+    [HttpPut("{id}")]
+    [Authorize(Roles = "admin")]
+    public async Task<IActionResult> PutArticle(int id, ArticleCreateDto dto)
+    {
+        var article = await _context.Articles
+            .Include(a => a.Categories)
+            .FirstOrDefaultAsync(a => a.Id == id);
+
+        if (article == null)
+        {
+            return NotFound(new { message = $"Статья для обновления с ID {id} не найдена." });
+        }
+
+        if (article.Content != dto.Content)//Логируем старый контент в историю изменений, если текст поменялся
+        {
+            var historyEntry = new HistoryOfChanges
+            {
+                ArticleId = article.Id,
+                OldContent = article.Content,
+                EditorId = dto.AuthorId, // Пользователь, приславший изменения, становится редактором
+                ChangedAt = DateTime.UtcNow
+            };
+            _context.HistoryOfChanges.Add(historyEntry);
+        }
+
+        article.Title = dto.Title;
+        article.Content = dto.Content;
+        article.UpdatedAt = DateTime.UtcNow;
+
+        article.Categories.Clear(); // Сбрасываем старые связи
+        if (dto.CategoryIds.Any())
+        {
+            var categories = await _context.Categories
+                .Where(c => dto.CategoryIds.Contains(c.Id))
+                .ToListAsync();
+            
+            article.Categories = categories;
+        }
+
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!await ArticleExists(id)) return NotFound();
+            throw;
+        }
+
+        return NoContent(); // 204 Успешно обновлено
+    }
+
+    [HttpDelete("{id}")]
+    [Authorize(Roles = "admin")]
+    public async Task<IActionResult> DeleteArticle(int id)
+    {
+        var article = await _context.Articles.FindAsync(id);
+        if (article == null)
+        {
+            return NotFound(new { message = $"Статья с ID {id} не найдена." });
+        }
+
+        _context.Articles.Remove(article);
+        await _context.SaveChangesAsync();
+
+        return NoContent(); // 204 Успешно удалено
+    }
+
+    private async Task<bool> ArticleExists(int id)
+    {
+        return await _context.Articles.AnyAsync(e => e.Id == id);
     }
 }

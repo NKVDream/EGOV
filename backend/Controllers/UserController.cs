@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using Egov.Models;
 using Egov.Data;
 using Egov.DTOs;
+using Egov.Services;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Egov.Controllers;
 
@@ -11,13 +13,45 @@ namespace Egov.Controllers;
 public class UserController : ControllerBase
 {
     private readonly ApplicationDbContext _context;
+    private readonly JwtService _jwtService;
 
-    public UserController(ApplicationDbContext context)
+    public UserController(ApplicationDbContext context, JwtService jwtService)
     {
         _context = context;
+        _jwtService = jwtService;
     }
 
+    [HttpPost("Login")]
+    public async Task<IActionResult>Login(LoginDto dto)
+    {
+        var user = await _context.Users
+        .Include(u => u.Role)
+        .FirstOrDefaultAsync(u => u.Email == dto.Email);
+
+        if (user == null)
+        {
+            return Unauthorized(new {message = "Неверный Email или пароль."});
+        }
+
+        bool isPasswordValid = BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash);
+        if (!isPasswordValid)
+        {
+            return Unauthorized(new{massage = "Неверный Email или пароль"});
+        }
+
+        var token = _jwtService.GenerateToken(user);
+
+        return Ok(new
+        {
+            token = token,
+            username = user.Name,
+            role = user.Role?.Name ?? "User"
+        });
+    }
+    
+
     [HttpGet]
+    [Authorize(Roles = "admin")]
     public async Task<ActionResult<IEnumerable<UserReadDto>>> GetUsers()
     {
         var users = await _context.Users
@@ -37,6 +71,7 @@ public class UserController : ControllerBase
     }
 
     [HttpGet("{id}")]
+    [Authorize(Roles = "admin")]
     public async Task<ActionResult<UserReadDto>> GetUser(int id)
     {
         var user = await _context.Users
@@ -61,6 +96,7 @@ public class UserController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "admin")]
     public async Task<ActionResult<UserReadDto>> CreateUser(User user)
     {
         if (string.IsNullOrWhiteSpace(user.Name))
@@ -104,6 +140,7 @@ public class UserController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [Authorize(Roles = "admin")]
     public async Task<IActionResult> DeleteUser(int id)
     {
         var user = await _context.Users

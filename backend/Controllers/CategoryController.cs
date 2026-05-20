@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Egov.Models;
 using Egov.Data;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Egov.Controllers;
 
@@ -41,6 +42,7 @@ public class CategoryController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "admin")]
     public async Task<ActionResult<Category>> CreateCategory(Category category)
     {
         if (string.IsNullOrWhiteSpace(category.Name))
@@ -61,6 +63,7 @@ public class CategoryController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [Authorize(Roles = "admin")]
     public async Task<IActionResult> PutCategory(int id, Category updatedCategory)
     {
         if (id != updatedCategory.Id)
@@ -97,6 +100,7 @@ public class CategoryController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [Authorize(Roles = "admin")]
     public async Task<IActionResult> DeleteCategory(int id)
     {
         var category = await _context.Categories
@@ -108,7 +112,6 @@ public class CategoryController : ControllerBase
             return NotFound(new { message = $"Категория с ID {id} не найдена." });
         }
 
-        // ЗАЩИТА ОШИБКИ RESTRICT: 
         // Если к категории привязаны статьи, не даем ее удалить, пока админ не уберет ее из статей.
         if (category.Articles.Any())
         {
