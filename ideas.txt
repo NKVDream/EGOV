@@ -1,0 +1,92 @@
+Для базы данных PostgreSQL и объема до 5000 статей разворачивать отдельные поисковые движки вроде Elasticsearch точно не нужно.
+Сам PostgreSQL обладает мощными встроенными инструментами для текстового поиска,
+которых с запасом хватит для вашей задачи.
+
+-- Включаем модуль триграмм
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
+-- Создаем быстрый индекс для столбца с названием статьи (например, title)
+CREATE INDEX idx_articles_title_trgm ON "Articles" USING gin (title gin_trgm_ops);
+
+
+ Создание эндпоинта в .NET Web API
+ В вашем контроллере создайте быстрый метод, который принимает введенный текст, делает запрос в БД и возвращает топ-5 или топ-10 подходящих названий.
+
+ [HttpGet("suggestions")]
+public async Task<IActionResult> GetSuggestions([FromQuery] string query)
+{
+    if (string.IsNullOrWhiteSpace(query) || query.Length < 2)
+        return Ok(Array.Empty<string>());
+
+    // Ищем статьи, где название содержит введенный текст (регистронезависимо)
+    // Благодаря индексу GIN этот запрос на 5000 записей отработает за пару миллисекунд
+    var suggestions = await _context.Articles
+        .Where(a => EF.Functions.ILike(a.Title, $"%{query}%"))
+        .Select(a => a.Title)
+        .Take(5) // Ограничиваем выдачу для подсказок
+        .ToListAsync();
+
+    return Ok(suggestions);
+}
+
+
+Шаг 3. Реализация живого поиска на React
+На фронтенде критически важно использовать Debounce (задержку), чтобы не отправлять запросы в базу данных на абсолютно каждое нажатие клавиши.
+Запрос уйдет только тогда, когда пользователь сделает паузу в печати хотя бы на 200–300 мс.
+import React, { useState, useEffect } from 'react';
+
+export default function SearchAutocomplete() {
+  const [input, setInput] = useState('');
+  const [suggestions, setSuggestions] = useState([]);
+
+  useEffect(() => {
+    // Если введено меньше 2 символов, очищаем подсказки и никуда не стучимся
+    if (input.trim().length < 2) {
+      setSuggestions([]);
+      return;
+    }
+
+    // Устанавливаем таймер задержки (Debounce) в 250 миллисекунд
+    const delayDebounceFn = setTimeout(async () => {
+      try {
+        const response = await fetch(`/api/articles/suggestions?query=${encodeURIComponent(input)}`);
+        const data = await response.json();
+        setSuggestions(data);
+      } catch (error) {
+        console.error("Ошибка загрузки подсказок:", error);
+      }
+    }, 250);
+
+    // Если пользователь нажал следующую букву до истечения 250 мс, старый таймер сбрасывается
+    return () => clearTimeout(delayDebounceFn);
+  }, [input]);
+
+  return (
+    <div style={{ position: 'relative', width: '300px' }}>
+      <input
+        type="text"
+        placeholder="Поиск статей..."
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        style={{ width: '100%', padding: '8px' }}
+      />
+      
+      {suggestions.length > 0 && (
+        <ul style={{ 
+          position: 'absolute', width: '100%', background: '#fff', 
+          border: '1px solid #ccc', margin: 0, padding: 0, listStyle: 'none', zIndex: 10 
+        }}>
+          {suggestions.map((item, index) => (
+            <li 
+              key={index} 
+              onClick={() => setInput(item)}
+              style={{ padding: '8px', cursor: 'pointer', borderBottom: '1px solid #eee' }}
+            >
+              {item}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
