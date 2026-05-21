@@ -24,7 +24,6 @@ public class ArticleController : ControllerBase
         var articles = await _context.Articles
             .Include(a => a.Author)
             .Include(a => a.Categories)
-            .AsNoTracking()
             .ToListAsync();
 
         var articleDtos = articles.Select(a => new ArticleReadDto
@@ -48,6 +47,7 @@ public class ArticleController : ControllerBase
         var article = await _context.Articles
             .Include(a => a.Author)
             .Include(a => a.Categories)
+            .AsNoTracking()
             .FirstOrDefaultAsync(a => a.Id == id);
 
         if (article == null)
