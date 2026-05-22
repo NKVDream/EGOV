@@ -48,6 +48,58 @@ public class UserController : ControllerBase
             role = user.Role?.Name ?? "User"
         });
     }
+
+    [HttpPost("Registration")]
+public async Task<IActionResult> Register(RegistrationDto dto)
+{
+    
+    if (string.IsNullOrWhiteSpace(dto.Name))
+    {
+        return BadRequest(new { message = "Имя пользователя не может быть пустым." });
+    }
+
+    if (string.IsNullOrWhiteSpace(dto.Email))
+    {
+        return BadRequest(new { message = "Email обязателен." });
+    }
+
+    if (string.IsNullOrWhiteSpace(dto.Password))
+    {
+        return BadRequest(new { message = "Пароль обязателен." });
+    }
+
+    var nameExists = await _context.Users.AnyAsync(u => u.Name == dto.Name);
+    if (nameExists)
+    {
+        return BadRequest(new { message = "Пользователь с таким NickName уже существует." });
+    }
+
+    var emailExists = await _context.Users.AnyAsync(u => u.Email == dto.Email);
+    if (emailExists)
+    {
+        return BadRequest(new { message = "Пользователь с таким Email уже зарегистрирован." });
+    }
+
+    var defaultRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "user");
+    if (defaultRole == null)
+    {
+        return StatusCode(500, new { message = "Системная роль 'user' не найдена в БД. Обратитесь к админу." });
+    }
+
+    var newUser = new User
+    {
+        Name = dto.Name,
+        Email = dto.Email,
+        PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
+        RoleId = defaultRole.Id // Присваиваем дефолтную роль автоматически
+    };
+
+    _context.Users.Add(newUser);
+    await _context.SaveChangesAsync();
+
+    return Ok(new { message = "Регистрация успешно завершена!" });
+}
+
     
 
     [HttpGet]

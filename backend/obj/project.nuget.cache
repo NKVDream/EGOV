@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "Ze/8hur7UB71ThWdaTy/UBMcE+VZu00fKM/sPh3eAaShAYAfhaxm8/mjkiWUjK3OssPA+OzP/wYSxw8qhnKt1Q==",
+  "dgSpecHash": "lgYgixuE89lttjpFF/8Mb8UroFSqXQYgPa+cOgitjcks6sV2voYX+uvJefORcD3cPnHED8T6PiZgJQcdwupVbA==",
   "success": true,
-  "projectFilePath": "/home/v.kapustin@PSO.LOCAL/Desktop/EGOVapp/EGOV/backend/backend.csproj",
+  "projectFilePath": "/home/v.kapustin@PSO.LOCAL/Desktops/Desktop1/EGOVapp/EGOV/backend/backend.csproj",
   "expectedPackageFiles": [
     "/home/v.kapustin@PSO.LOCAL/.nuget/packages/bcrypt.net-next/4.0.3/bcrypt.net-next.4.0.3.nupkg.sha512",
     "/home/v.kapustin@PSO.LOCAL/.nuget/packages/microsoft.aspnetcore.authentication.jwtbearer/8.0.27/microsoft.aspnetcore.authentication.jwtbearer.8.0.27.nupkg.sha512",

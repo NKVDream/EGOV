@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 export default function Login() {
-  // Переименовали email в login, чтобы пользователь понимал, что можно ввести никнейм
   const [login, setLogin] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -13,7 +12,7 @@ export default function Login() {
     setError('');
 
     try {
-      const response = await fetch('https://localhost:5000/api/User/Login', {
+      const response = await fetch('https://localhost:5170/api/User/Login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -27,8 +26,7 @@ export default function Login() {
         throw new Error(data.message || 'Ошибка авторизации');
       }
 
-      // Сохраняем сессию в браузере
-      localStorage.setItem('token', data.token);
+      localStorage.setItem('token', data.token);// Сохраняем сессию в браузере
       localStorage.setItem('username', data.username);
       localStorage.setItem('role', data.role);
 
@@ -48,7 +46,7 @@ export default function Login() {
       <form onSubmit={handleSubmit}>
         <div style={{ marginBottom: '15px' }}>
           {/* Поменяли текст подсказки для пользователя */}
-          <label style={{ display: 'block', marginBottom: '5px' }}>NickName или Email:</label>
+          <label style={{ display: 'block', marginBottom: '5px' }}>Имя пользователя или Email:</label>
           <input 
             type="text" // Изменили тип на text, чтобы браузер не ругался на отсутствие знака @
             value={login} 
