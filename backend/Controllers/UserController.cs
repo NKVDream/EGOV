@@ -26,17 +26,17 @@ public class UserController : ControllerBase
     {
         var user = await _context.Users
         .Include(u => u.Role)
-        .FirstOrDefaultAsync(u => u.Email == dto.Email);
+        .FirstOrDefaultAsync(u => u.Name == dto.Login||u.Email == dto.Login);
 
         if (user == null)
         {
-            return Unauthorized(new {message = "Неверный Email или пароль."});
+            return Unauthorized(new {message = "Неверный NickName, Email или пароль."});
         }
 
         bool isPasswordValid = BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash);
         if (!isPasswordValid)
         {
-            return Unauthorized(new{massage = "Неверный Email или пароль"});
+            return Unauthorized(new{message = "Неверный Email или пароль"});
         }
 
         var token = _jwtService.GenerateToken(user);

@@ -12,7 +12,7 @@ builder.Services.AddCors(options =>//настройка CORS для связи �
 {
     options.AddDefaultPolicy(policy =>
     {
-        policy.WithOrigins("http://localhost:3000")//реакт на этом порту
+        policy.WithOrigins("http://localhost:5137")//реакт на этом порту
               .AllowAnyHeader()
               .AllowAnyMethod();
     });
@@ -89,7 +89,7 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-app.UseCors();
+app.UseCors("AllowReact");
 
 app.UseHttpsRedirection();
 
