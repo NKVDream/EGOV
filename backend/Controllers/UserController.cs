@@ -36,7 +36,7 @@ public class UserController : ControllerBase
         bool isPasswordValid = BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash);
         if (!isPasswordValid)
         {
-            return Unauthorized(new{message = "Неверный Email или пароль"});
+            return Unauthorized(new{message = "Неверный NickName, Email или пароль"});
         }
 
         var token = _jwtService.GenerateToken(user);
