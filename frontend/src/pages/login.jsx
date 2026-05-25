@@ -13,7 +13,7 @@ export default function Login() {
     setError('');
 
     try {
-      const response = await fetch('https://localhost:5170/api/User/Login', {
+      const response = await fetch('http://localhost:5170/api/User/Login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

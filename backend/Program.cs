@@ -10,9 +10,12 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddCors(options =>//настройка CORS для связи с фронтом
 {
-    options.AddDefaultPolicy(policy =>
+    options.AddPolicy("AllowReact", policy =>
     {
-        policy.WithOrigins("http://localhost:5137")//реакт на этом порту
+        policy.WithOrigins(
+            "http://localhost:5173",
+            "https://localhost:5173"
+            )//реакт на этом порту
               .AllowAnyHeader()
               .AllowAnyMethod();
     });
