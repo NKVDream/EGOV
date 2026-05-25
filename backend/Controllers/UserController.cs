@@ -97,7 +97,7 @@ public async Task<IActionResult> Register(RegistrationDto dto)
     _context.Users.Add(newUser);
     await _context.SaveChangesAsync();
 
-    return Ok(new { message = "Регистрация успешно завершена!" });
+    return Ok(new { message = "Регистрация успешно завершена" });
 }
 
     

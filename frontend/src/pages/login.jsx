@@ -38,7 +38,7 @@ export default function Login() {
   };
 
   return (
-    <div style={{ maxWidth: '350px', margin: '100px auto', padding: '20px', border: '1px solid #ccc', borderRadius: '5px' }}>
+    <div style={{ maxWidth: '350px', margin: '100px auto', padding: '20px', border: '1px solid #ccc', borderRadius: '10px' }}>
       <h2>Вход в систему</h2>
       
       {error && <p style={{ color: 'red' }}>{error}</p>}
@@ -48,7 +48,7 @@ export default function Login() {
           {/* Поменяли текст подсказки для пользователя */}
           <label style={{ display: 'block', marginBottom: '5px' }}>Имя пользователя или Email:</label>
           <input 
-            type="text" // Изменили тип на text, чтобы браузер не ругался на отсутствие знака @
+            type="text"
             value={login} 
             onChange={(e) => setLogin(e.target.value)} 
             style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}
@@ -65,8 +65,13 @@ export default function Login() {
             required 
           />
         </div>
+        <p></p>
         <button type="submit" style={{ width: '100%', padding: '10px', background: '#007bff', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer' }}>
           Войти
+        </button>
+        <p>У меня нету аккаунта:</p>
+        <button type='button' onClick={() => navigate('/registration')} style={{ width: '100%', padding: '10px', background: '#28a745', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer' }}>
+          Зарегестрироваться
         </button>
       </form>
     </div>
