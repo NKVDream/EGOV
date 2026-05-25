@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import '../App.css';
 
 export default function Login() {
   const [login, setLogin] = useState('');
@@ -38,6 +39,7 @@ export default function Login() {
   };
 
   return (
+    <div className='app-wrapper'>
     <div style={{ maxWidth: '350px', margin: '100px auto', padding: '20px', border: '1px solid #ccc', borderRadius: '10px' }}>
       <h2>Вход в систему</h2>
       
@@ -74,6 +76,7 @@ export default function Login() {
           Зарегестрироваться
         </button>
       </form>
+    </div>
     </div>
   );
 }

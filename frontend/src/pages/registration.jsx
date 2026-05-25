@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import '../App.css';
 
 export default function Registration() {
   const [name, setName] = useState('');
@@ -41,7 +42,7 @@ export default function Registration() {
   };
 
   return (
-    <div style={{display:'flex',justifyContent:'center', alignContent:'center', alignItems:'center', minHeight:'100vh', boxSizing:'border-box'}}>
+    <div className="app-wrapper">
     <div style={{ maxWidth: '350px', padding: '20px', border: '1px solid #ccc', borderRadius: '10px' }}>
       <h2>Регистрация в систему</h2>
       
