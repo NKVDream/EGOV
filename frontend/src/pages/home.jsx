@@ -9,4 +9,9 @@ export default function Home(){
   const [loading, setLoading] = useState();
 
   const userRole = localStorage.getItem('role');
+
+  useEffect(() =>{
+    fetch('http://localhost:5170/api/Article')
+    .then((res) => res.json())
+  })
 }

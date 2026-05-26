@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../App.css';
 import '../components/buttons.css'
+import {TextField, Button, Box, Typography, Divider} from '@mui/material'
 
 export default function Login() {
   const [login, setLogin] = useState('');
@@ -40,43 +41,60 @@ export default function Login() {
   };
 
   return (
-    <div className='app-wrapper'>
+  <div className='app-wrapper'>
     <div style={{ maxWidth: '350px', margin: '100px auto', padding: '20px', border: '1px solid #ccc', borderRadius: '10px' }}>
-      <h2>Вход в систему</h2>
+      <h2 style={{justifyContent:'center', display:'flex'}}>Вход в систему</h2>
       
       {error && <p style={{ color: 'red' }}>{error}</p>}
 
       <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: '15px' }}>
-          <label style={{ display: 'block', marginBottom: '5px' }}>Имя пользователя или Email:</label>
-          <input 
-            type="text"
-            value={login} 
-            onChange={(e) => setLogin(e.target.value)} 
-            style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}
-            required 
-          />
-        </div>
-        <div style={{ marginBottom: '15px' }}>
-          <label style={{ display: 'block', marginBottom: '5px' }}>Пароль:</label>
-          <input 
-            type="password" 
-            value={password} 
-            onChange={(e) => setPassword(e.target.value)} 
-            style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}
-            required 
-          />
-        </div>
-        <p></p>
-        <button type="submit"className='blue-button'>
+        <TextField
+          label="Имя пользователя или Email"
+          variant="outlined"
+          type="text"
+          value={login}
+          onChange={(e) => setLogin(e.target.value)}
+          required
+          fullWidth
+          margin="normal"
+        />
+
+        <TextField
+          label="Пароль"
+          variant="outlined"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+          fullWidth
+          margin="normal"
+        />
+
+        <Button 
+          type="submit" 
+          variant="contained" 
+          color="primary" 
+          fullWidth 
+          sx={{ mt: 2, mb: 2 }} // Отступы: сверху и снизу
+        >
           Войти
-        </button>
-        <p>У меня нету аккаунта:</p>
-        <button type='button' onClick={() => navigate('/registration')} className='green-button'>
+        </Button>
+
+        <p style={{ margin: '10px 0 5px 0', fontSize: '14px', color: '#666' }}>
+          У меня нет аккаунта:
+        </p>
+
+        <Button 
+          type="button" 
+          onClick={() => navigate('/registration')} 
+          variant="outlined" 
+          color="success" 
+          fullWidth
+        >
           Зарегистрироваться
-        </button>
+        </Button>
       </form>
     </div>
-    </div>
-  );
+  </div>
+);
 }

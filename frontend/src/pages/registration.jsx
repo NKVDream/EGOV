@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import '../App.css';
+import { TextField, Button, Box, Typography } from "@mui/material";
 
 export default function Registration() {
   const [name, setName] = useState('');
@@ -41,63 +42,84 @@ export default function Registration() {
     }
   };
 
-  return (
-    <div className="app-wrapper">
-    <div style={{ maxWidth: '350px', padding: '20px', border: '1px solid #ccc', borderRadius: '10px' }}>
-      <h2>Регистрация в систему</h2>
+
+return (
+  <div className="app-wrapper">
+    <div style={{ maxWidth: '350px', margin: '100px auto', padding: '20px', border: '1px solid #ccc', borderRadius: '10px' }}>
+      <h2 style={{ justifyContent: "center", display: "flex" }}>Регистрация в систему</h2>
       
       {error && <p style={{ color: 'red' }}>{error}</p>}
 
       <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: '15px' }}>
-          <label style={{ display: 'block', marginBottom: '5px' }}>Имя:</label>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}
-            required
-          />
-        </div>
-        <div style={{ marginBottom: '15px' }}>
-          <label style={{ display: 'block', marginBottom: '5px' }}>Email:</label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}
-            required
-          />
-        </div>
-        <div style={{ marginBottom: '15px' }}>
-          <label style={{ display: 'block', marginBottom: '5px' }}>Пароль:</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}
-            required
-          />
-          <div>
-            <label>Подтвердить пароль:</label>
-            <input
-            type="password"
-            value={confirmPassword}
-            onChange = {(e) => setConfirmPassword(e.target.value)}
-            style={{width: '100%', padding: '8px', boxSizing: 'border-box'}}
-            required
-             />
-          </div>
-        </div>
-        <button type="submit" style={{ width: '100%', padding: '10px', background: '#28a745', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer' }}>
+        <TextField
+          label="Имя"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          fullWidth
+          margin="normal"
+          variant="outlined"
+          required
+        />
+        
+        <TextField
+          label="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          margin="normal"
+          fullWidth
+          variant="outlined"
+          required
+        />
+
+        <TextField
+          label="Пароль"
+          type="password"
+          variant="outlined"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          margin="normal"
+          fullWidth
+          required
+        />
+
+        <TextField
+          label="Подтвердить пароль"
+          type="password"
+          variant="outlined"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          fullWidth
+          margin="normal"
+          required
+        />
+
+        <Button
+          type="submit"
+          variant="contained"
+          color="success"
+          fullWidth
+          sx={{ mt: 2, mb: 2, py: 1.2 }} 
+        >
           Зарегистрироваться
-        </button>
-        <p>У меня уже есть аккаунт:</p>
-        <button type="button" onClick={() => navigate('/login')} style={{ width: '100%', padding: '10px', background: '#007bff', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer' }}>
-        Войти в аккаунт
-        </button>
+        </Button>
+
+        <p style={{ fontSize: '14px', margin: '10px 0 5px 0', color: '#666' }}>
+          У меня уже есть аккаунт:
+        </p>
+
+        <Button 
+          type="button" 
+          onClick={() => navigate('/login')} 
+          variant="outlined" 
+          color="primary" 
+          fullWidth
+          sx={{ py: 1.2 }}
+        >
+          Войти в аккаунт
+        </Button>
       </form>
     </div>
-    </div>
-  );
+  </div>
+);
+
 }
