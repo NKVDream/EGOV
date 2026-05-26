@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../App.css';
+import '../components/buttons.css'
 
 export default function Login() {
   const [login, setLogin] = useState('');
@@ -47,7 +48,6 @@ export default function Login() {
 
       <form onSubmit={handleSubmit}>
         <div style={{ marginBottom: '15px' }}>
-          {/* Поменяли текст подсказки для пользователя */}
           <label style={{ display: 'block', marginBottom: '5px' }}>Имя пользователя или Email:</label>
           <input 
             type="text"
@@ -68,12 +68,12 @@ export default function Login() {
           />
         </div>
         <p></p>
-        <button type="submit" style={{ width: '100%', padding: '10px', background: '#007bff', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer' }}>
+        <button type="submit"className='blue-button'>
           Войти
         </button>
         <p>У меня нету аккаунта:</p>
-        <button type='button' onClick={() => navigate('/registration')} style={{ width: '100%', padding: '10px', background: '#28a745', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer' }}>
-          Зарегестрироваться
+        <button type='button' onClick={() => navigate('/registration')} className='green-button'>
+          Зарегистрироваться
         </button>
       </form>
     </div>
