@@ -11,6 +11,7 @@ export default function Registration() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleClickShowPassword = () => setShowPassword((show) => !show);
@@ -18,6 +19,8 @@ export default function Registration() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+
+    setIsLoading(true);
 
     if(password !== confirmPassword){
       setError('Пароли не совпадают')
@@ -43,13 +46,39 @@ export default function Registration() {
       navigate('/login'); 
     } catch (err) {
       setError(err.message);
+      setIsLoading(false);
     }
   };
 
 
 return (
-  <div className="app-wrapper">
-    <div style={{ maxWidth: '350px', margin: '100px auto', padding: '20px', border: '1px solid #ccc', borderRadius: '10px' }}>
+  <div className='app-wrapper' style={{ position: 'relative', minHeight: '100vh' }}>
+      {isLoading && (
+        <div style={{
+          position: 'absolute',
+          top: 0, left: 0, right: 0, bottom: 0,
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 10,
+          pointerEvents: 'none'
+        }}>
+          <CircularProgress aria-label="Loading…" size={60} />
+        </div>
+      )}
+  
+      <div style={{ 
+        maxWidth: '350px', 
+        margin: '100px auto', 
+        padding: '20px', 
+        border: '1px solid #ccc', 
+        borderRadius: '10px',
+        filter: isLoading ? 'blur(4px)' : 'none',
+        opacity: isLoading ? 0.7 : 1,
+        transition: 'filter 0.3s ease, opacity 0.3s ease',
+        pointerEvents: isLoading ? 'none' : 'auto'
+      }}>
+
       <h2 style={{ justifyContent: "center", display: "flex" }}>Регистрация в систему</h2>
       
       {error && <p style={{ color: 'red' }}>{error}</p>}
@@ -131,6 +160,7 @@ return (
           variant="contained"
           color="success"
           fullWidth
+          disabled={isLoading}
           sx={{ mt: 2, mb: 2, py: 1.2 }} 
         >
           Зарегистрироваться
@@ -146,6 +176,7 @@ return (
           variant="outlined" 
           color="primary" 
           fullWidth
+          disabled={isLoading}
           sx={{ py: 1.2 }}
         >
           Войти в аккаунт
