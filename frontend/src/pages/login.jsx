@@ -1,14 +1,18 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../App.css';
-import '../components/buttons.css'
-import {TextField, Button, Box, Typography, Divider} from '@mui/material'
+import '../components/buttons.css';
+import {TextField, Button, Box, Typography, Divider, InputAdornment, IconButton} from '@mui/material';
+import {Visibility, VisibilityOff} from '@mui/icons-material';
 
 export default function Login() {
   const [login, setLogin] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+
+  const handleClickShowPassword = () => setShowPassword((show) => !show);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -62,12 +66,27 @@ export default function Login() {
         <TextField
           label="Пароль"
           variant="outlined"
-          type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
           fullWidth
           margin="normal"
+          type={showPassword ? 'text' : 'password'}
+          slotProps={{
+            input: {
+              endAdornment: (
+                <InputAdornment position='end'>
+                  <IconButton
+                    aria-label='Переключить видимость пароля'
+                    onClick={handleClickShowPassword}
+                    edge="end"
+                  >
+                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              )
+            }
+          }}
         />
 
         <Button 
@@ -79,7 +98,7 @@ export default function Login() {
         >
           Войти
         </Button>
-
+        <Divider sx={{my: 2}}>или</Divider>
         <p style={{ margin: '10px 0 5px 0', fontSize: '14px', color: '#666' }}>
           У меня нет аккаунта:
         </p>

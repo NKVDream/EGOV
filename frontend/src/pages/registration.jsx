@@ -1,15 +1,19 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import '../App.css';
-import { TextField, Button, Box, Typography } from "@mui/material";
+import {TextField, Button, Box, Typography, Divider, InputAdornment, IconButton} from '@mui/material';
+import {Visibility, VisibilityOff} from '@mui/icons-material';
 
 export default function Registration() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('');
-  const navigate = useNavigate(); // Убрали лишние кавычки из вызова hook
+  const navigate = useNavigate();
+
+  const handleClickShowPassword = () => setShowPassword((show) => !show);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -70,27 +74,56 @@ return (
           variant="outlined"
           required
         />
-
+        <Divider sx={{my: 2}}></Divider>
         <TextField
           label="Пароль"
-          type="password"
           variant="outlined"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           margin="normal"
           fullWidth
           required
+          type={showPassword ? 'text' : 'password'}
+          slotProps={{
+            input: {
+              endAdornment: (
+                <InputAdornment position='end'>
+                  <IconButton
+                    aria-label='Переключить видимость пароля'
+                    onClick={handleClickShowPassword}
+                    edge="end"
+                  >
+                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              )
+            }
+          }}
         />
-
         <TextField
           label="Подтвердить пароль"
-          type="password"
           variant="outlined"
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
           fullWidth
           margin="normal"
           required
+          type={showPassword ? 'text' : 'password'}
+          slotProps={{
+            input: {
+              endAdornment: (
+                <InputAdornment position='end'>
+                  <IconButton
+                    aria-label='Переключить видимость пароля'
+                    onClick={handleClickShowPassword}
+                    edge="end"
+                  >
+                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              )
+            }
+          }}
         />
 
         <Button
@@ -102,7 +135,7 @@ return (
         >
           Зарегистрироваться
         </Button>
-
+        <Divider sx={{my: 2}}>или</Divider>
         <p style={{ fontSize: '14px', margin: '10px 0 5px 0', color: '#666' }}>
           У меня уже есть аккаунт:
         </p>
