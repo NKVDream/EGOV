@@ -18,6 +18,30 @@ public class ArticleController : ControllerBase
         _context = context;
     }
 
+    [HttpGet("suggestions")]
+    public async Task<IActionResult> GetSuggestions([FromQuery] string query)
+    {
+        if (string.IsNullOrWhiteSpace(query))
+            return Ok(Array.Empty<string>());
+
+        try
+        {
+            var suggestions = await _context.Articles
+                .Where(a => EF.Functions.ILike(a.Title, $"%{query}%"))
+                .Select(a => a.Title)
+                .Take(5)
+                .ToListAsync();
+
+            return Ok(suggestions);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ex.Message);
+        }
+    }
+
+
+
     [HttpGet]
     public async Task<ActionResult<IEnumerable<ArticleReadDto>>> GetArticles()
     {
