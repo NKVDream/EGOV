@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="6.0982013mm"
+   height="2.4273889mm"
+   viewBox="0 0 6.0982013 2.4273889"
+   version="1.1"
+   id="svg5"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs2">
+    <rect
+       x="138.56378"
+       y="469.54251"
+       width="91.710724"
+       height="84.497467"
+       id="rect348" />
+  </defs>
+  <g
+     id="layer1"
+     transform="translate(-46.720084,-131.99365)">
+    <text
+       xml:space="preserve"
+       transform="scale(0.26458333)"
+       id="text346"
+       style="white-space:pre;shape-inside:url(#rect348);fill:#0000ff" />
+    <text
+       xml:space="preserve"
+       style="font-size:3.175px;white-space:pre;inline-size:15.8734;fill:#0000ff;stroke-width:0.264583"
+       x="46.411171"
+       y="134.38477"
+       id="text354"><tspan
+         x="46.411171"
+         y="134.38477"
+         id="tspan770">E</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:3.14085px;fill:#0000ff;stroke-width:0.261738"
+       x="48.245697"
+       y="132.94031"
+       id="text408"
+       transform="scale(0.9892442,1.0108727)"><tspan
+         id="tspan406"
+         style="stroke-width:0.261738"
+         x="48.245697"
+         y="132.94031">W</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:3.175px;fill:#0000ff;stroke-width:0.264583"
+       x="50.343544"
+       y="134.42104"
+       id="text567"><tspan
+         id="tspan565"
+         style="stroke-width:0.264583"
+         x="50.343544"
+         y="134.42104">i</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:3.175px;fill:#0000ff;stroke-width:0.264583"
+       x="50.804081"
+       y="134.40665"
+       id="text571"><tspan
+         id="tspan569"
+         style="stroke-width:0.264583"
+         x="50.804081"
+         y="134.40665">k</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:3.175px;fill:#0000ff;stroke-width:0.264583"
+       x="-51.879787"
+       y="-132.52998"
+       id="text567-3"
+       transform="rotate(179.49524)"><tspan
+         id="tspan565-6"
+         style="stroke-width:0.264583"
+         x="-51.879787"
+         y="-132.52998">i</tspan></text>
+  </g>
+</svg>

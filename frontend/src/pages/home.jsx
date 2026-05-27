@@ -236,8 +236,8 @@ export default function Home() {
       </Drawer>
 
       <Box component="main" sx={{ p: 3 }}>
-        <Typography variant="h4" gutterBottom>Добро пожаловать, {username}!</Typography>
-        <Typography variant="body1">Здесь будет располагаться основной контент вашего домашнего экрана.</Typography>
+        <Typography variant="h4" gutterBottom></Typography>
+        <Typography variant="body1"></Typography>
       </Box>
     </Box>
   );
