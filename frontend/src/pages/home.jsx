@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom'; // Добавили для навигации
 import { styled, alpha } from '@mui/material/styles';
+import { CardBlog } from '../components/CardBlog';
 import { 
   AppBar, Box, Toolbar, IconButton, Typography, InputBase, 
   Drawer, List, ListItem, ListItemButton, ListItemText, Divider,
-  Paper, MenuItem, MenuList
+  Paper, MenuItem, MenuList, CircularProgress
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import SearchIcon from '@mui/icons-material/Search';
@@ -68,9 +69,33 @@ export default function Home() {
   const username = localStorage.getItem('username') || 'Пользователь';
   const navigate = useNavigate();
 
+  // Состояния для автокомплита поиска
   const [input, setInput] = useState('');
   const [suggestions, setSuggestions] = useState([]);
 
+  // ДОБАВЛЕНО: Состояния для хранения ленты статей и анимации загрузки
+  const [articles, setArticles] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // ДОБАВЛЕНО: Хук для загрузки списка всех статей для ленты
+  useEffect(() => {
+    async function fetchArticles() {
+      try {
+        const response = await fetch('http://localhost:5170/api/Article');
+        if (response.ok) {
+          const data = await response.json();
+          setArticles(data);
+        }
+      } catch (error) {
+        console.error("Ошибка загрузки ленты статей:", error);
+      } finally {
+        setLoading(false); // Выключаем спиннер загрузки
+      }
+    }
+    fetchArticles();
+  }, []);
+
+  // Хук автокомплита поиска с задержкой (Ваш код)
   useEffect(() => {
     if (input.trim().length < 2) {
       setSuggestions([]);
@@ -98,6 +123,7 @@ export default function Home() {
 
   return (
     <Box sx={{ flexGrow: 1 }}>
+      {/* ВЕРХНЯЯ ПАНЕЛЬ С АНИМАЦИЕЙ СКРЫТИЯ */}
       <HideOnScroll>
         <AppBar position="fixed">
           <Toolbar>
@@ -133,6 +159,7 @@ export default function Home() {
                 inputProps={{ 'aria-label': 'search' }}
               />
 
+              {/* Выпадающий список подсказок поиска */}
               {Array.isArray(suggestions) && suggestions.length > 0 && (
                 <Paper
                   elevation={4}
@@ -179,13 +206,14 @@ export default function Home() {
                 </Paper>
               )}
             </Search>
-
           </Toolbar>
         </AppBar>
       </HideOnScroll>
 
+      {/* Toolbar-заглушка, чтобы AppBar fixed не перекрывал контент */}
       <Toolbar />
 
+      {/* ВЫДВИГАЮЩАЯСЯ БОКОВАЯ ПАНЕЛЬ (DRAWER) */}
       <Drawer
         anchor="left"
         open={isDrawerOpen}
@@ -235,9 +263,39 @@ export default function Home() {
         </Box>
       </Drawer>
 
-      <Box component="main" sx={{ p: 3 }}>
-        <Typography variant="h4" gutterBottom></Typography>
-        <Typography variant="body1"></Typography>
+      {/* ОСНОВНОЙ КОНТЕНТ (ЛЕНТА СТАТЕЙ КАРТОЧКАМИ) */}
+      <Box 
+        component="main" 
+        sx={{ 
+          p: 3, 
+          display: 'flex', 
+          flexDirection: 'column', 
+          gap: 4, 
+          alignItems: 'center',
+          backgroundColor: '#f9f9f9', 
+          minHeight: '100vh'
+        }}
+      >
+        <Box sx={{ width: '100%', maxWidth: 500, mb: 1 }}>
+          <Typography variant="h4" fontWeight="bold" gutterBottom>
+            Лента EgovWiki
+          </Typography>
+        </Box>
+
+        {/* Проверка состояния загрузки ленты */}
+        {loading ? (
+          <CircularProgress sx={{ mt: 5 }} />
+        ) : articles.length === 0 ? (
+          <Typography color="text.secondary">Статей пока нет.</Typography>
+        ) : (
+          articles.map((article) => (
+            <CardBlog 
+              key={article.id || article.Id} 
+              article={article} 
+              onClick={() => navigate(`/article/${article.id || article.Id}`)} 
+            />
+          ))
+        )}
       </Box>
     </Box>
   );
