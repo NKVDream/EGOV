@@ -6,7 +6,7 @@ import {
 } from '@mui/material';
 
 export default function CreateArticle() {
-  const { id } = useParams(); // Извлекаем ID из URL (если мы в режиме редактирования)
+  const { id } = useParams();
   const navigate = useNavigate();
   const isEditMode = Boolean(id); // Флаг: true — редактирование, false — создание
 
@@ -21,11 +21,10 @@ export default function CreateArticle() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  // 1. ПРИ ИНИЦИАЛИЗАЦИИ: Загружаем список всех доступных категорий
-  useEffect(() => {
+  useEffect(() => {//Загружаем список всех доступных категорий
     async function loadCategories() {
       try {
-        const response = await fetch('http://localhost:5170/api/Category'); // Замените на ваш эндпоинт категорий
+        const response = await fetch('http://localhost:5170/api/Category');
         if (response.ok) {
           const data = await response.json();
           setCategoriesList(data);
@@ -36,8 +35,7 @@ export default function CreateArticle() {
     }
     loadCategories();
 
-    // 2. ЕСЛИ РЕЖИМ РЕДАКТИРОВАНИЯ: Подтягиваем старые данные статьи
-    if (isEditMode) {
+    if (isEditMode) {//будучи в режиме редактирования -> подтягиваем старые данные
       async function fetchArticleData() {
         setLoading(true);
         try {
@@ -46,7 +44,6 @@ export default function CreateArticle() {
             const data = await response.json();
             setTitle(data.title || data.Title);
             setContent(data.content || data.Content);
-            // Заполняем выбранные категории массивом их ID
             if (data.categoryIds || data.CategoryIds) {
               setSelectedCategories(data.categoryIds || data.CategoryIds);
             }
@@ -63,8 +60,7 @@ export default function CreateArticle() {
     }
   }, [id, isEditMode]);
 
-  // 3. ОБРАБОТЧИК ОТПРАВКИ ФОРМЫ (ОБЩИЙ ДЛЯ POST И PUT)
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e) => {// отправка формы
     e.preventDefault();
     setError('');
     setSuccess('');
@@ -74,22 +70,19 @@ export default function CreateArticle() {
       return;
     }
 
-    // Вытаскиваем токен и ID пользователя из localStorage (сохраненные при логине)
     const token = localStorage.getItem('token'); 
-    const authorId = parseInt(localStorage.getItem('userId')) || 1; // ID текущего админа
+    const authorId = parseInt(localStorage.getItem('userId')) || 1;
 
-    // Формируем DTO, строго соответствующий вашему ArticleCreateDto на бэке
     const articleDto = {
-      title: title.trim(),          // ⇄ public string Title
-      content: content.trim(),      // ⇄ public string Content
-      authorId: authorId,           // ⇄ public int AuthorId
-      categoryIds: selectedCategories // ⇄ public List<int> CategoryIds
+      title: title.trim(),
+      content: content.trim(),
+      authorId: authorId,
+      categoryIds: selectedCategories
     };
 
     setLoading(true);
     try {
-      // Меняем метод и URL в зависимости от режима (PUT или POST)
-      const url = isEditMode 
+      const url = isEditMode// метод в зависимости от режима
         ? `http://localhost:5170/api/Article/${id}` 
         : 'http://localhost:5170/api/Article';
       
@@ -99,16 +92,16 @@ export default function CreateArticle() {
         method: method,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}` // Передаем токен для [Authorize(Roles = "admin")]
+          'Authorization': `Bearer ${token}` //Передаем токен
         },
         body: JSON.stringify(articleDto)
       });
 
       if (response.ok) {
-        setSuccess(isEditMode ? 'Статья успешно обновлена!' : 'Статья успешно создана!');
+        setSuccess(isEditMode ? 'Статья успешно обновлена' : 'Статья успешно создана!');
         setTimeout(() => {
-          navigate('/home'); // Перенаправляем на главную ленту через 1.5 секунды
-        }, 1500);
+          navigate('/home'); // Перенаправляем на главную через 1.2 сек
+        }, 1200);
       } else {
         const errorData = await response.json();
         setError(errorData.message || 'Произошла ошибка при сохранении статьи.');
@@ -129,8 +122,35 @@ export default function CreateArticle() {
   }
 
   return (
-    <Container maxWidth="md" sx={{ mt: 5, mb: 5 }}>
-      <Paper elevation={3} sx={{ p: 4, borderRadius: 3 }}>
+  <Box 
+    sx={{ 
+      display: 'flex', 
+      justifyContent: 'center', 
+      alignItems: 'flex-start',
+      minHeight: '100vh',
+      backgroundColor: '#f5f5f5',
+      pt: 5,
+      pb: 5,
+      width: '100vw'
+    }}
+  >
+    <Container 
+      maxWidth="md" 
+      disableGutters
+      sx={{ 
+        width: '100%',
+        mx: 'auto'
+      }}
+    >
+      <Paper 
+        elevation={3} 
+        sx={{ 
+          p: 4, 
+          borderRadius: 3,
+          width: '100%',
+          boxSizing: 'border-box'
+        }}
+      >
         <Typography variant="h4" fontWeight="bold" gutterBottom>
           {isEditMode ? 'Редактирование статьи' : 'Создание новой статьи'}
         </Typography>
@@ -142,7 +162,6 @@ export default function CreateArticle() {
         {success && <Alert severity="success" sx={{ mb: 3 }}>{success}</Alert>}
 
         <Box component="form" onSubmit={handleSubmit} noValidate>
-          {/* ПОЛЕ НАЗВАНИЯ */}
           <TextField
             margin="normal"
             required
@@ -153,7 +172,6 @@ export default function CreateArticle() {
             disabled={loading}
           />
 
-          {/* МНОЖЕСТВЕННЫЙ ВЫБОР КАТЕГОРИЙ (MUI Select Multiple + Chips) */}
           <FormControl fullWidth margin="normal">
             <InputLabel id="categories-label">Категории</InputLabel>
             <Select
@@ -179,21 +197,19 @@ export default function CreateArticle() {
             </Select>
           </FormControl>
 
-          {/* ПОЛЕ ТЕКСТА СТАТЬИ */}
           <TextField
             margin="normal"
             required
             fullWidth
             multiline
-            rows={12} // Делаем поле большим, как полноценный текстовый редактор
-            label="Содержимое статьи (Поддерживает текст)"
+            rows={12}
+            label="Содержимое статьи (Поддерживает только текст)"
             value={content}
             onChange={(e) => setContent(e.target.value)}
             disabled={loading}
             sx={{ mt: 2 }}
           />
 
-          {/* КНОПКИ ДЕЙСТВИЯ */}
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 3 }}>
             <Button 
               variant="outlined" 
@@ -219,5 +235,6 @@ export default function CreateArticle() {
         </Box>
       </Paper>
     </Container>
-  );
+  </Box>
+);
 }

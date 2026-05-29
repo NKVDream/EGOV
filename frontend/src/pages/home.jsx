@@ -5,13 +5,14 @@ import { CardBlog } from '../components/CardBlog';
 import { 
   AppBar, Box, Toolbar, IconButton, Typography, InputBase, 
   Drawer, List, ListItem, ListItemButton, ListItemText, Divider,
-  Paper, MenuItem, MenuList, CircularProgress
+  Paper, MenuItem, MenuList, CircularProgress, Button
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import SearchIcon from '@mui/icons-material/Search';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import useScrollTrigger from '@mui/material/useScrollTrigger';
 import Slide from '@mui/material/Slide';
+import AddIcon from '@mui/icons-material/Add';
 
 function HideOnScroll(props) {
   const { children } = props;
@@ -142,7 +143,35 @@ export default function Home() {
             >
               EgovWiki
             </Typography>
-            
+            {localStorage.getItem('role') === 'admin' && (
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => navigate('/article/create')}
+              sx={{
+                mr: 2,
+                backgroundColor: 'rgba(255, 255, 255, 0.2)', // Полупрозрачный белый фон в стиле AppBar
+                color: '#ffffff',
+                textTransform: 'none', // Отключаем автоматический верхний регистр букв
+                fontWeight: 'bold',
+                borderRadius: 2,
+                '&:hover': {
+                  backgroundColor: 'rgba(255, 255, 255, 0.35)', // Выделение при наведении
+                },
+                // На очень маленьких экранах скрываем текст, оставляя только иконку
+                display: 'flex',
+                '& .MuiButton-startIcon': {
+                  marginRight: { xs: 0, sm: 1 }
+                },
+                px: { xs: 1.5, sm: 2 }
+              }}
+            >
+              {/* Текст скроется на мобилках, чтобы не ломать шапку */}
+              <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
+                Создать статью
+              </Box>
+            </Button>
+          )}
             <Search>
               <SearchIconWrapper>
                 <SearchIcon />
