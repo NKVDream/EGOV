@@ -78,22 +78,44 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
 
   // ДОБАВЛЕНО: Хук для загрузки списка всех статей для ленты
-  useEffect(() => {
-    async function fetchArticles() {
-      try {
-        const response = await fetch('http://localhost:5170/api/Article');
-        if (response.ok) {
-          const data = await response.json();
+useEffect(() => {
+  async function fetchArticles() {
+    try {
+      // Пробуем достучаться до базового эндпоинта статей
+      const response = await fetch('http://localhost:5170/api/Article');
+      
+      console.log("Статус ответа от C#:", response.status); // Выведет 200, 404 или 500
+
+      if (response.ok) {
+        const data = await response.json();
+        
+        // ВАЖНО: Посмотрите в консоль F12, что напечатает эта строка!
+        console.log("Реальное содержимое тела ответа бэкенда:", data);
+
+        // Проверяем структуру и раскладываем по полочкам
+        if (Array.isArray(data)) {
           setArticles(data);
+        } else if (data && Array.isArray(data.items)) {
+          setArticles(data.items); // если завернуто в items
+        } else if (data && Array.isArray(data.data)) {
+          setArticles(data.data);   // если завернуто в data
+        } else {
+          console.warn("Бэкенд вернул объект вместо массива строк/объектов!");
+          setArticles([]);
         }
-      } catch (error) {
-        console.error("Ошибка загрузки ленты статей:", error);
-      } finally {
-        setLoading(false); // Выключаем спиннер загрузки
+      } else {
+        console.error("Сервер вернул ошибку при запросе ленты");
+        setArticles([]);
       }
+    } catch (error) {
+      console.error("Критическая ошибка fetch ленты статей:", error);
+      setArticles([]);
+    } finally {
+      setLoading(false); // В любом случае выключаем спиннер
     }
-    fetchArticles();
-  }, []);
+  }
+  fetchArticles();
+}, []);
 
   // Хук автокомплита поиска с задержкой (Ваш код)
   useEffect(() => {

@@ -17,8 +17,27 @@ public class ApplicationDbContext : DbContext
     public DbSet<Role>Roles{get; set;}
     public DbSet<HistoryOfChanges>HistoryOfChanges{get; set;}
 
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
-    {
-        base.OnModelCreating(modelBuilder);
-    }
+protected override void OnModelCreating(ModelBuilder modelBuilder)
+{
+    base.OnModelCreating(modelBuilder);
+    modelBuilder.Entity<Article>()
+        .HasMany(a => a.Categories)
+        .WithMany(c => c.Articles)
+        .UsingEntity<Dictionary<string, object>>(
+            "ArticleCategoryJoin",
+            j => j
+                .HasOne<Category>()
+                .WithMany()
+                .HasForeignKey("category_id") 
+                .HasPrincipalKey(c => c.Id),
+            j => j
+                .HasOne<Article>()
+                .WithMany()
+                .HasForeignKey("article_id") 
+                .HasPrincipalKey(a => a.Id),
+            j => j
+                .ToTable("article_category") 
+        );
+}
+
 }

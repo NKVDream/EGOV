@@ -29,5 +29,5 @@ public class Article
     public int AuthorId { get; set; }
     public User Author { get; set; } = null!;
 
-    public List<Category> Categories { get; set; } = new();
+    public ICollection<Category> Categories { get; set; } = new List<Category>();
 }

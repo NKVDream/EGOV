@@ -18,5 +18,5 @@ public class Category
     [Column("description")]
     public string Description{get; set;} ="";
 
-    public List<Article> Articles { get; set; } = new();
+    public ICollection<Article> Articles { get; set; } = new List<Article>();
 }
