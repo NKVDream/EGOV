@@ -3,6 +3,7 @@ import Login from './pages/login';
 import Home from './pages/home';
 import Registration from './pages/registration';
 import CreateArticle from './pages/createArticle';
+import ReadArticle from './pages/readArticle';
 
 // Компонент защиты маршрутов (не пустит без токена)
 function ProtectedRoute({ children }) {
@@ -25,6 +26,7 @@ export default function App() {
         <Route path="/registration" element={<Registration/>}/>
         <Route path="/article/create" element={<CreateArticle />} />
         <Route path="/article/edit/:id" element={<CreateArticle />} />
+        <Route path="/article/:id" element={<ReadArticle />} />
 
         
         {/* Защищенный маршрут: главная страница со статьями */}

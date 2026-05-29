@@ -22,23 +22,24 @@ public class ArticleController : ControllerBase
     public async Task<IActionResult> GetSuggestions([FromQuery] string query)
     {
         if (string.IsNullOrWhiteSpace(query))
-            return Ok(Array.Empty<string>());
+            return Ok(Array.Empty<object>()); // Возвращаем пустой массив
 
         try
         {
             var suggestions = await _context.Articles
                 .Where(a => EF.Functions.ILike(a.Title, $"%{query}%"))
-                .Select(a => a.Title)
+                .Select(a => new { a.Id, a.Title }) // Извлекаем И Id, И Title
                 .Take(5)
                 .ToListAsync();
 
-            return Ok(suggestions);
+            return Ok(suggestions); // Возвращает JSON: [{"id": 1, "title": "Квантунская армия"}]
         }
         catch (Exception ex)
         {
             return StatusCode(500, ex.Message);
         }
     }
+
 
 
 

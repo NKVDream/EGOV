@@ -66,7 +66,7 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
 }));
 
 export default function Home() {
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false); // состояние открытия/закрытия боковой панели
   const username = localStorage.getItem('username') || 'Пользователь';
   const navigate = useNavigate();
 
@@ -74,25 +74,61 @@ export default function Home() {
   const [input, setInput] = useState('');
   const [suggestions, setSuggestions] = useState([]);
 
+  // Состояния для ленты статей
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => { //Хук для загрузки списка всех статей для ленты
-    async function fetchArticles() {
-      try {
-        const response = await fetch('http://localhost:5170/api/Article');
-        if (response.ok) {
-          const data = await response.json();
-          setArticles(data);
+  const fetchArticles = async () => {
+    try {
+      const response = await fetch('http://localhost:5170/api/Article');
+      if (response.ok) {
+        const data = await response.json();
+        
+        if (Array.isArray(data)) {//Сортировка статей. Самые новые будут наверху ленты.
+          const sortedArticles = data.sort((a, b) => {
+            const dateA = new Date(a.createdAt || a.CreatedAt || 0);
+            const dateB = new Date(b.createdAt || b.CreatedAt || 0);
+            return dateB - dateA; // Сортировка от большей даты к меньшей
+          });
+          setArticles(sortedArticles);
         }
-      } catch (error) {
-        console.error("Ошибка загрузки ленты статей:", error);
-      } finally {
-        setLoading(false);
       }
+    } catch (error) {
+      console.error("Ошибка загрузки ленты статей:", error);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  useEffect(() => {
     fetchArticles();
   }, []);
+
+  useEffect(() => {
+    if (input.trim().length < 2) {
+      setSuggestions([]);
+      return;
+    }
+
+    const delayDebounceFn = setTimeout(async () => {
+      try {
+        const response = await fetch(`http://localhost:5170/api/Article/suggestions?query=${encodeURIComponent(input)}`);
+        const data = await response.json();
+        
+        if (Array.isArray(data)) {
+          setSuggestions(data);
+        } else {
+          setSuggestions([]);
+        }
+      } catch (error) {
+        console.error("Ошибка загрузки подсказок:", error);
+        setSuggestions([]);
+      }
+    }, 250);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [input]);
+
 
   useEffect(() => {
     if (input.trim().length < 2) {
@@ -150,15 +186,14 @@ export default function Home() {
               onClick={() => navigate('/article/create')}
               sx={{
                 mr: 2,
-                backgroundColor: 'rgba(255, 255, 255, 0.2)', // Полупрозрачный белый фон в стиле AppBar
+                backgroundColor: 'rgba(255, 255, 255, 0.2)',
                 color: '#ffffff',
-                textTransform: 'none', // Отключаем автоматический верхний регистр букв
+                textTransform: 'none',
                 fontWeight: 'bold',
                 borderRadius: 2,
                 '&:hover': {
                   backgroundColor: 'rgba(255, 255, 255, 0.35)', // Выделение при наведении
                 },
-                // На очень маленьких экранах скрываем текст, оставляя только иконку
                 display: 'flex',
                 '& .MuiButton-startIcon': {
                   marginRight: { xs: 0, sm: 1 }
@@ -166,7 +201,6 @@ export default function Home() {
                 px: { xs: 1.5, sm: 2 }
               }}
             >
-              {/* Текст скроется на мобилках, чтобы не ломать шапку */}
               <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
                 Создать статью
               </Box>
@@ -183,57 +217,57 @@ export default function Home() {
                 onChange={(e) => setInput(e.target.value)}
                 inputProps={{ 'aria-label': 'search' }}
               />
-              {Array.isArray(suggestions) && suggestions.length > 0 && (
-                <Paper
-                  elevation={4}
-                  sx={{
-                    position: 'absolute',
-                    top: '110%',
-                    left: 0,
-                    right: 0,
-                    zIndex: 10,
-                    maxHeight: '250px',
-                    overflowY: 'auto',
-                    backgroundColor: '#ffffff',
-                    color: '#333333',
-                  }}
-                >
-                  <MenuList disablePadding>
-                    {suggestions.map((item, index) => {
-                      let displayName = "";
-                      if (item && typeof item === 'object') {
-                        displayName = item.title || item.Title || JSON.stringify(item);
-                      } else {
-                        displayName = String(item);
-                      }
+            {Array.isArray(suggestions) && suggestions.length > 0 && (
+              <Paper
+                elevation={4}
+                sx={{
+                  position: 'absolute',
+                  top: '110%',
+                  left: 0,
+                  right: 0,
+                  zIndex: 10,
+                  maxHeight: '250px',
+                  overflowY: 'auto',
+                  backgroundColor: '#ffffff',
+                  color: '#333333',
+                }}
+              >
+                <MenuList disablePadding>
+                  {suggestions.map((item, index) => {
+                    const articleId = item?.id || item?.Id;
+                    const displayName = item?.title || item?.Title || String(item);
 
-                      return (
-                        <MenuItem 
-                          key={index} 
-                          onClick={() => {
-                            setInput(displayName);
-                            setSuggestions([]);
-                          }}
-                          sx={{
-                            whiteSpace: 'normal',
-                            borderBottom: '1px solid #eee',
-                            '&:last-child': { borderBottom: 'none' },
-                            color: '#333333',
-                          }}
-                        >
-                          {displayName}
-                        </MenuItem>
-                      );
-                    })}
-                  </MenuList>
-                </Paper>
-              )}
+                    return (
+                      <MenuItem 
+                        key={index} 
+                        onClick={() => {
+                          setInput('');
+                          setSuggestions([]);
+                          
+                          if (articleId) {
+                            navigate(`/article/${articleId}`);
+                          }
+                        }}
+                        sx={{
+                          whiteSpace: 'normal',
+                          borderBottom: '1px solid #eee',
+                          '&:last-child': { borderBottom: 'none' },
+                          color: '#333333',
+                        }}
+                      >
+                        {displayName}
+                      </MenuItem>
+                    );
+                  })}
+                </MenuList>
+              </Paper>
+            )}
+
             </Search>
           </Toolbar>
         </AppBar>
       </HideOnScroll>
 
-      {/* Toolbar-заглушка, чтобы AppBar fixed не перекрывал контент */}
       <Toolbar />
 
       <Drawer

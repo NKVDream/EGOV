@@ -97,12 +97,18 @@ export default function CreateArticle() {
         body: JSON.stringify(articleDto)
       });
 
-      if (response.ok) {
-        setSuccess(isEditMode ? 'Статья успешно обновлена' : 'Статья успешно создана!');
-        setTimeout(() => {
-          navigate('/home'); // Перенаправляем на главную через 1.2 сек
-        }, 1200);
-      } else {
+    if (response.ok) {
+      setSuccess(isEditMode ? 'Статья успешно обновлена!' : 'Статья успешно создана!');
+      
+      setTimeout(() => {
+        if (isEditMode) {
+          navigate(`/article/${id}`); 
+        } else {
+          navigate('/home'); 
+        }
+      }, 1500);
+    }
+else {
         const errorData = await response.json();
         setError(errorData.message || 'Произошла ошибка при сохранении статьи.');
       }
@@ -135,7 +141,7 @@ export default function CreateArticle() {
     }}
   >
     <Container 
-      maxWidth="md" 
+      maxWidth="lg" 
       disableGutters
       sx={{ 
         width: '100%',
