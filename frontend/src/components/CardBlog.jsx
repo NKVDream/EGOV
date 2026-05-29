@@ -8,11 +8,9 @@ export function CardBlog({ article, onClick }) {
     return text.slice(0, maxLength).trim() + '...';
   };
 
-  // Полная защита от регистра букв (PascalCase и camelCase)
   const contentText = article?.content || article?.Content || article?.text || article?.Text || '';
   const titleText = article?.title || article?.Title || 'Без названия';
   
-  // Защита для даты
   const rawDate = article?.createdAt || article?.CreatedAt || article?.date || article?.Date;
   const dateText = rawDate ? new Date(rawDate).toLocaleDateString() : 'НЕДАВНО';
 
@@ -53,11 +51,21 @@ export function CardBlog({ article, onClick }) {
         </Typography>
 
         <Typography 
-          variant="body2" 
-          sx={{ mb: 2, fontSize: '0.9rem', lineHeight: '1.5', color: 'text.secondary' }}
-        >
-          {truncateText(contentText)}
-        </Typography>
+        variant="body2" 
+        sx={{ 
+          mb: 2, 
+          fontSize: '0.9rem', 
+          lineHeight: '1.5', 
+          color: 'text.secondary',
+          display: '-webkit-box',
+          WebkitLineClamp: 2,          // Показывает ровно 2 строки, остальное скрывает
+          WebkitBoxOrient: 'vertical',
+          overflow: 'hidden',
+          wordBreak: 'break-word'
+        }}
+      >
+        {contentText}
+      </Typography>
 
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
           <Button

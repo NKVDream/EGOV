@@ -65,7 +65,7 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
 }));
 
 export default function Home() {
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false); // состояние открытия/закрытия боковой панели
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const username = localStorage.getItem('username') || 'Пользователь';
   const navigate = useNavigate();
 
@@ -73,51 +73,26 @@ export default function Home() {
   const [input, setInput] = useState('');
   const [suggestions, setSuggestions] = useState([]);
 
-  // ДОБАВЛЕНО: Состояния для хранения ленты статей и анимации загрузки
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // ДОБАВЛЕНО: Хук для загрузки списка всех статей для ленты
-useEffect(() => {
-  async function fetchArticles() {
-    try {
-      // Пробуем достучаться до базового эндпоинта статей
-      const response = await fetch('http://localhost:5170/api/Article');
-      
-      console.log("Статус ответа от C#:", response.status); // Выведет 200, 404 или 500
-
-      if (response.ok) {
-        const data = await response.json();
-        
-        // ВАЖНО: Посмотрите в консоль F12, что напечатает эта строка!
-        console.log("Реальное содержимое тела ответа бэкенда:", data);
-
-        // Проверяем структуру и раскладываем по полочкам
-        if (Array.isArray(data)) {
+  useEffect(() => { //Хук для загрузки списка всех статей для ленты
+    async function fetchArticles() {
+      try {
+        const response = await fetch('http://localhost:5170/api/Article');
+        if (response.ok) {
+          const data = await response.json();
           setArticles(data);
-        } else if (data && Array.isArray(data.items)) {
-          setArticles(data.items); // если завернуто в items
-        } else if (data && Array.isArray(data.data)) {
-          setArticles(data.data);   // если завернуто в data
-        } else {
-          console.warn("Бэкенд вернул объект вместо массива строк/объектов!");
-          setArticles([]);
         }
-      } else {
-        console.error("Сервер вернул ошибку при запросе ленты");
-        setArticles([]);
+      } catch (error) {
+        console.error("Ошибка загрузки ленты статей:", error);
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error("Критическая ошибка fetch ленты статей:", error);
-      setArticles([]);
-    } finally {
-      setLoading(false); // В любом случае выключаем спиннер
     }
-  }
-  fetchArticles();
-}, []);
+    fetchArticles();
+  }, []);
 
-  // Хук автокомплита поиска с задержкой (Ваш код)
   useEffect(() => {
     if (input.trim().length < 2) {
       setSuggestions([]);
@@ -145,7 +120,6 @@ useEffect(() => {
 
   return (
     <Box sx={{ flexGrow: 1 }}>
-      {/* ВЕРХНЯЯ ПАНЕЛЬ С АНИМАЦИЕЙ СКРЫТИЯ */}
       <HideOnScroll>
         <AppBar position="fixed">
           <Toolbar>
@@ -180,8 +154,6 @@ useEffect(() => {
                 onChange={(e) => setInput(e.target.value)}
                 inputProps={{ 'aria-label': 'search' }}
               />
-
-              {/* Выпадающий список подсказок поиска */}
               {Array.isArray(suggestions) && suggestions.length > 0 && (
                 <Paper
                   elevation={4}
@@ -235,7 +207,6 @@ useEffect(() => {
       {/* Toolbar-заглушка, чтобы AppBar fixed не перекрывал контент */}
       <Toolbar />
 
-      {/* ВЫДВИГАЮЩАЯСЯ БОКОВАЯ ПАНЕЛЬ (DRAWER) */}
       <Drawer
         anchor="left"
         open={isDrawerOpen}
@@ -285,7 +256,7 @@ useEffect(() => {
         </Box>
       </Drawer>
 
-      {/* ОСНОВНОЙ КОНТЕНТ (ЛЕНТА СТАТЕЙ КАРТОЧКАМИ) */}
+      {/* ОСНОВНОЙ КОНТЕНТ*/}
       <Box 
         component="main" 
         sx={{ 
@@ -303,8 +274,6 @@ useEffect(() => {
             Лента EgovWiki
           </Typography>
         </Box>
-
-        {/* Проверка состояния загрузки ленты */}
         {loading ? (
           <CircularProgress sx={{ mt: 5 }} />
         ) : articles.length === 0 ? (
