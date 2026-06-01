@@ -131,7 +131,7 @@ export default function ReadArticle() {
           sx={{ mb: 3, textTransform: 'none', fontWeight: 'bold' }}
           color="inherit"
         >
-          Назад к ленте
+          Назад
         </Button>
 
         {/* ОСНОВНАЯ КАРТОЧКА СТАТЬИ */}
@@ -142,7 +142,7 @@ export default function ReadArticle() {
             borderRadius: 3, 
             boxSizing: 'border-box',
             width: '100%',
-            position: 'relative' // Важно для позиционирования кнопок админа
+            position: 'relative'
           }}
         >
           
@@ -188,13 +188,12 @@ export default function ReadArticle() {
             sx={{ 
               fontSize: { xs: '2rem', md: '3rem' }, 
               color: 'text.primary',
-              pr: isAdmin ? { xs: 12, md: 16 } : 0 // Отступ справа, чтобы текст не наезжал на кнопки
+              pr: isAdmin ? { xs: 12, md: 16 } : 0
             }}
           >
             {titleText}
           </Typography>
 
-          {/* МЕТА-ДАННЫЕ */}
           <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 3, mt: 2, mb: 3, color: 'text.secondary' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
               <PersonIcon fontSize="small" />

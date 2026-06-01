@@ -193,7 +193,7 @@ export default function Home() {
                 fontWeight: 'bold',
                 borderRadius: 2,
                 '&:hover': {
-                  backgroundColor: 'rgba(255, 255, 255, 0.35)', // Выделение при наведении
+                  backgroundColor: 'rgba(255, 255, 255, 0.35)',
                 },
                 display: 'flex',
                 '& .MuiButton-startIcon': {
@@ -337,7 +337,7 @@ export default function Home() {
       >
         <Box sx={{ width: '100%', mb: 1 }}>
           <Typography variant="h4" fontWeight="bold" gutterBottom>
-            Лента EgovWiki
+            
           </Typography>
         </Box>
 

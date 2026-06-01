@@ -214,6 +214,10 @@ else {
             onChange={(e) => setContent(e.target.value)}
             disabled={loading}
             sx={{ mt: 2 }}
+              inputProps={{ 
+              spellCheck: true, 
+              lang: 'ru'
+            }} 
           />
 
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 3 }}>
