@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom'; // Добавили для навигации
+import { useNavigate } from 'react-router-dom';
 import { styled, alpha } from '@mui/material/styles';
+import { Masonry } from '@mui/material';
 import { CardBlog } from '../components/CardBlog';
 import { 
   AppBar, Box, Toolbar, IconButton, Typography, InputBase, 
@@ -329,26 +330,44 @@ export default function Home() {
           gap: 4, 
           alignItems: 'center',
           backgroundColor: '#f9f9f9', 
-          minHeight: '100vh'
+          minHeight: '100vh',
+          width: '100%',             /* Гарантируем растяжение на весь экран */
+          boxSizing: 'border-box'
         }}
       >
-        <Box sx={{ width: '100%', maxWidth: 500, mb: 1 }}>
+        <Box sx={{ width: '100%', maxWidth: '1200px', mb: 1 }}> {/* Увеличили maxWidth, чтобы заголовок не зажимался слева */}
           <Typography variant="h4" fontWeight="bold" gutterBottom>
             Лента EgovWiki
           </Typography>
         </Box>
+
         {loading ? (
           <CircularProgress sx={{ mt: 5 }} />
         ) : articles.length === 0 ? (
           <Typography color="text.secondary">Статей пока нет.</Typography>
         ) : (
-          articles.map((article) => (
-            <CardBlog 
-              key={article.id || article.Id} 
-              article={article} 
-              onClick={() => navigate(`/article/${article.id || article.Id}`)} 
-            />
-          ))
+          /* Вставляем Masonry вместо обычного списка */
+          <Masonry 
+            columns={{ xs: 1, sm: 2, md: 3, lg: 4 }} /* Адаптивное количество колонок */
+            spacing={3}                              /* Отступы между карточками */
+            sx={{ 
+              width: '100%', 
+              maxWidth: '1200px',                    /* Максимальная ширина всей сетки */
+              margin: '0 auto' 
+            }}
+          >
+            {articles.map((article) => (
+              <Box 
+                key={article.id || article.Id} 
+                sx={{ width: '100%' }}               /* Обязательно: карточка должна занимать 100% ширины своей колонки */
+              >
+                <CardBlog 
+                  article={article} 
+                  onClick={() => navigate(`/article/${article.id || article.Id}`)} 
+                />
+              </Box>
+            ))}
+          </Masonry>
         )}
       </Box>
     </Box>

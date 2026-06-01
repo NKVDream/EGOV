@@ -51,3 +51,5 @@
 /home/v.kapustin@PSO.LOCAL/Desktops/Desktop1/EGOVapp/EGOV/backend/bin/Debug/net8.0/Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
 /home/v.kapustin@PSO.LOCAL/Desktops/Desktop1/EGOVapp/EGOV/backend/bin/Debug/net8.0/Microsoft.IdentityModel.Tokens.dll
 /home/v.kapustin@PSO.LOCAL/Desktops/Desktop1/EGOVapp/EGOV/backend/bin/Debug/net8.0/System.IdentityModel.Tokens.Jwt.dll
+/home/v.kapustin@PSO.LOCAL/Desktops/Desktop1/EGOVapp/EGOV/backend/bin/Debug/net8.0/package-lock.json
+/home/v.kapustin@PSO.LOCAL/Desktops/Desktop1/EGOVapp/EGOV/backend/bin/Debug/net8.0/package.json
