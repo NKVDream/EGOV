@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { styled, alpha } from '@mui/material/styles';
-import { Masonry } from '@mui/material';
+import { Masonry } from '@mui/lab';
 import { CardBlog } from '../components/CardBlog';
 import { 
   AppBar, Box, Toolbar, IconButton, Typography, InputBase, 
