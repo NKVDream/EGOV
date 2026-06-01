@@ -5,7 +5,7 @@ import Registration from './pages/registration';
 import CreateArticle from './pages/createArticle';
 import ReadArticle from './pages/readArticle';
 
-// Компонент защиты маршрутов (не пустит без токена)
+//не пустит без токена
 function ProtectedRoute({ children }) {
   const token = localStorage.getItem('token');
   
