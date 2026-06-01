@@ -24,10 +24,17 @@ a:hover {
 
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
+  padding: 0;
+  width: 100%;
   min-height: 100vh;
+  background-color: #f9f9f9; /* Делает стандартный фон страницы светлым */
+}
+
+
+#root {
+  width: 100%;
+  margin: 0;
+  padding: 0;
 }
 
 h1 {

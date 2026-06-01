@@ -64,7 +64,7 @@ export function CardBlog({ article, onClick, onDeleteRefresh }) {
       onClick={onClick}
       sx={(theme) => ({
         width: '100%',
-        maxWidth: 500,
+        maxWidth: '100%',
         borderRadius: 2,
         transition: '0.3s',
         cursor: 'pointer',

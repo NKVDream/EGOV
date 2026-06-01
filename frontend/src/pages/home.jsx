@@ -157,7 +157,7 @@ export default function Home() {
   }, [input]);
 
   return (
-    <Box sx={{ flexGrow: 1 }}>
+    <Box sx={{ flexGrow: 1, width: '100%', maxWidth: '100vw', boxSizing: 'border-box' }}>
       <HideOnScroll>
         <AppBar position="fixed">
           <Toolbar>
@@ -328,14 +328,14 @@ export default function Home() {
           display: 'flex', 
           flexDirection: 'column', 
           gap: 4, 
-          alignItems: 'center',
+          alignItems: 'stretch',
           backgroundColor: '#f9f9f9', 
           minHeight: '100vh',
-          width: '100%',             /* Гарантируем растяжение на весь экран */
+          width: '100%',
           boxSizing: 'border-box'
         }}
       >
-        <Box sx={{ width: '100%', maxWidth: '1200px', mb: 1 }}> {/* Увеличили maxWidth, чтобы заголовок не зажимался слева */}
+        <Box sx={{ width: '100%', mb: 1 }}>
           <Typography variant="h4" fontWeight="bold" gutterBottom>
             Лента EgovWiki
           </Typography>
@@ -346,20 +346,20 @@ export default function Home() {
         ) : articles.length === 0 ? (
           <Typography color="text.secondary">Статей пока нет.</Typography>
         ) : (
-          /* Вставляем Masonry вместо обычного списка */
-          <Masonry 
-            columns={{ xs: 1, sm: 2, md: 3, lg: 4 }} /* Адаптивное количество колонок */
-            spacing={3}                              /* Отступы между карточками */
-            sx={{ 
-              width: '100%', 
-              maxWidth: '1200px',                    /* Максимальная ширина всей сетки */
-              margin: '0 auto' 
-            }}
-          >
+        <Masonry 
+          columns={{ xs: 1, sm: 2, md: 3, lg: 4, xl: 5 }} 
+          spacing={6}                              
+          sx={{ 
+            width: '100% !important',
+            maxWidth: '100% !important',
+            margin: '0 !important',
+            padding: 0
+          }}
+        >
             {articles.map((article) => (
               <Box 
                 key={article.id || article.Id} 
-                sx={{ width: '100%' }}               /* Обязательно: карточка должна занимать 100% ширины своей колонки */
+                sx={{ width: '100%' }}
               >
                 <CardBlog 
                   article={article} 
