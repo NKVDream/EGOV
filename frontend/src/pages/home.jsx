@@ -10,6 +10,7 @@ export default function Home() {
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  //Загрузка статей с сервера
   const fetchArticles = async () => {
     try {
       const response = await fetch('http://localhost:5170/api/Article');
@@ -35,6 +36,35 @@ export default function Home() {
   useEffect(() => {
     fetchArticles();
   }, []);
+
+  const handleDeleteFromFeed = async (articleId) => {
+    if (!window.confirm('Вы уверены, что хотите навсегда удалить эту статью?')) {
+      return;
+    }
+
+    const token = localStorage.getItem('token');
+
+    try {
+      const response = await fetch(`http://localhost:5170/api/Article/${articleId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        alert('Статья успешно удалена');
+        
+        // Мгновенно убираем удаленную карточку из массива состояний React, чтобы страница не перезагружалась полностью
+        setArticles((prevArticles) => prevArticles.filter(a => (a.id || a.Id) !== articleId));
+      } else {
+        alert('Не удалось удалить статью. Ошибка сервера.');
+      }
+    } catch (error) {
+      console.error('Ошибка при удалении статьи из ленты:', error);
+      alert('Ошибка соединения с сервером.');
+    }
+  };
 
   return (
     <Layout>
@@ -70,17 +100,26 @@ export default function Home() {
               padding: 0
             }}
           >
-            {articles.map((article) => (
-              <Box 
-                key={article.id || article.Id} 
-                sx={{ width: '100%' }}               
-              >
-                <CardBlog 
-                  article={article} 
-                  onClick={() => navigate(`/article/${article.id || article.Id}`)} 
-                />
-              </Box>
-            ))}
+            {articles.map((article) => {
+              const articleId = article.id || article.Id;
+
+              return (
+                <Box 
+                  key={articleId} 
+                  sx={{ width: '100%' }}               
+                >
+                  <CardBlog 
+                    article={article} 
+
+                    onClick={() => navigate(`/article/${articleId}`)} 
+                    
+                    onEdit={() => navigate(`/article/edit/${articleId}`)}
+                    
+                    onDelete={() => handleDeleteFromFeed(articleId)}
+                  />
+                </Box>
+              );
+            })}
           </Masonry>
         )}
       </Box>
