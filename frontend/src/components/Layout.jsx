@@ -75,7 +75,6 @@ export default function Layout({ children }) {
   const [input, setInput] = useState('');
   const [suggestions, setSuggestions] = useState([]);
 
-  // Эффект для живого поиска подсказок на сервере (с задержкой 250мс)
   useEffect(() => {
     if (input.trim().length < 2) {
       setSuggestions([]);
