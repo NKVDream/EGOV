@@ -52,11 +52,6 @@ export default function Home() {
           boxSizing: 'border-box'
         }}
       >
-        <Box sx={{ width: '100%', mb: 1 }}>
-          <Typography variant="h4" fontWeight="bold" gutterBottom>
-            Лента EgovWiki
-          </Typography>
-        </Box>
 
         {loading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', mt: 5 }}>

@@ -213,4 +213,75 @@ public class ArticleController : ControllerBase
     {
         return await _context.Articles.AnyAsync(e => e.Id == id);
     }
+
+        [HttpGet("{id}/history")]
+    [Authorize(Roles = "admin")]
+    public async Task<IActionResult> GetArticleHistory(int id)
+    {
+        // Проверяем, существует ли сама статья
+        if (!await _context.Articles.AnyAsync(a => a.Id == id))
+        {
+            return NotFound(new { message = $"Статья с ID {id} не найдена." });
+        }
+
+        // Загружаем историю изменений, включая имя редактора для вывода в React
+        var history = await _context.HistoryOfChanges
+            .Where(h => h.ArticleId == id)
+            .Include(h => h.Editor) // Убедитесь, что в модели HistoryOfChanges настроен Navigation Property к User
+            .OrderByDescending(h => h.ChangedAt) // Свежие изменения будут первыми в списке
+            .Select(h => new
+            {
+                Id = h.Id,
+                Content = h.OldContent, // Передаем старый текст как контент версии
+                ChangedAt = h.ChangedAt,
+                EditorName = h.Editor != null ? h.Editor.Name : "Администратор"
+              })
+            .ToListAsync();
+
+        return Ok(history);
+    }
+
+    [HttpPost("rollback/{historyId}")]
+    [Authorize(Roles = "admin")]
+    public async Task<IActionResult> RollbackArticle(int historyId)
+    {
+        // Находим слепок истории
+        var historyEntry = await _context.HistoryOfChanges
+            .FirstOrDefaultAsync(h => h.Id == historyId);
+
+        if (historyEntry == null)
+        {
+            return NotFound(new { message = $"Запись в истории с ID {historyId} не найдена." });
+        }
+
+        // Находим оригинальную статью, к которой относится этот слепок
+        var article = await _context.Articles.FindAsync(historyEntry.ArticleId);
+        if (article == null)
+        {
+            return NotFound(new { message = "Оригинальная статья для этой версии больше не существует." });
+        }
+
+        // Перед тем как перетереть текущие данные, сохраняем их текущее состояние в историю.
+        // Это позволит админу вернуться назад, если он откатился по ошибке!
+        if (article.Content != historyEntry.OldContent)
+        {
+            var currentTextBackup = new HistoryOfChanges
+            {
+                ArticleId = article.Id,
+                OldContent = article.Content,
+                EditorId = historyEntry.EditorId, // Фиксируем, кто инициировал откат
+                ChangedAt = DateTime.UtcNow
+            };
+            _context.HistoryOfChanges.Add(currentTextBackup);
+        }
+
+        // Накатываем старый текст на статью
+        article.Content = historyEntry.OldContent;
+        article.UpdatedAt = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new { message = "Статья успешно восстановлена к выбранной версии." });
+    }
+
 }
