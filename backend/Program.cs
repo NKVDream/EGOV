@@ -101,4 +101,18 @@ app.UseAuthorization();//что ему можно
 
 app.MapControllers();
 
+using (var scope = app.Services.CreateScope())
+{
+    try
+    {
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        db.Database.Migrate(); 
+        Console.WriteLine("--> Миграции успешно применены!");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"--> Ошибка при применении миграций: {ex.Message}");
+    }
+}
+
 app.Run();
