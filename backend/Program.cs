@@ -14,7 +14,8 @@ builder.Services.AddCors(options =>//настройка CORS для связи �
     {
         policy.WithOrigins(
             "http://localhost:5173",
-            "https://localhost:5173"
+            "https://localhost:5173",
+            "http://localhost:3000"
             )//реакт на этом порту
               .AllowAnyHeader()
               .AllowAnyMethod();
