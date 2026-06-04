@@ -1,0 +1,22 @@
+# 1. ОБНОВЛЕНИЕ СИСТЕМЫ И УСТАНОВКА PYTHON
+sudo apt update && sudo apt install python3-pip python3-venv -y
+
+# 2. УСТАНОВКА И НАСТРОЙКА DOCKER
+sudo apt install docker.io -y
+sudo systemctl enable --now docker
+sudo usermod -aG docker $USER
+
+# 3. СКАЧИВАНИЕ И УСТАНОВКА POSTMAN (в папку /opt)
+tar -C /tmp/ -xzf <(curl -L https://pstmn.io) && sudo mv /tmp/Postman /opt/
+
+# 4. СОЗДАНИЕ ЯРЛЫКА ДЛЯ POSTMAN В МЕНЮ ПРИЛОЖЕНИЙ
+sudo tee /usr/share/applications/postman.desktop << END
+[Desktop Entry]
+Encoding=UTF-8
+Name=Postman
+Exec=/opt/Postman/Postman
+Icon=/opt/Postman/app/resources/app/assets/icon.png
+Terminal=false
+Type=Application
+Categories=Development;
+END

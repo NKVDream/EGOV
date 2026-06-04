@@ -1,24 +1,24 @@
 version: '3.8'
 
 services:
-  # 1. БАЗА ДАННЫХ (PostgreSQL)
+  #БД PostgreSQL
   postgres_db:
     image: postgres:16-alpine
     container_name: egov_postgres
     restart: always
     environment:
-      POSTGRES_USER: db_user
+      POSTGRES_USER: db_admin
       POSTGRES_PASSWORD: db_secure_password123
       POSTGRES_DB: egov_db
     ports:
-      - "5432:5432" # Пробрасываем порт наружу, чтобы вы могли подключиться через pgAdmin/DBeaver
+      - "5432:5432" # Пробрасываем порт наружу, чтобы мы могли подключиться через pgAdmin
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
-  # 2. БЭКЕНД (C# .NET API)
+  #БЭКЕНД (C# .NET API)
   backend:
     build:
-      context: ./backend # Путь к папке с вашим C# проектом
+      context: ./backend # Путь к папке с C# проектом
       dockerfile: Dockerfile
     container_name: egov_backend
     restart: always
@@ -29,16 +29,13 @@ services:
       # Заменяем localhost в строке подключения на имя контейнера базы данных (postgres_db)
       - ConnectionStrings__DefaultConnection=Host=postgres_db;Port=5432;Database=egov_db;Username=db_user;Password=db_secure_password123
       # Сюда же можно вписать настройки JWT из вашего Program.cs, чтобы не хранить их в коде:
-      - Jwt__Issuer=EgovIssuer
-      - Jwt__Audience=EgovAudience
-      - Jwt__Key=SuperSecretKeyForJwtTokenValidation2026!
     depends_on:
       - postgres_db # Бэкенд начнет загрузку только после старта базы данных
 
-  # 3. ФРОНТЕНД (React + Vite + Nginx)
+  #ФРОНТЕНД (React + Vite + Nginx)
   frontend:
     build:
-      context: ./frontend # Путь к папке с вашим React проектом
+      context: ./frontend # Путь к папке с React проектом
       dockerfile: Dockerfile
     container_name: egov_frontend
     restart: always
