@@ -14,12 +14,16 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import RestoreIcon from '@mui/icons-material/Restore';
 import Layout from '../components/Layout';
+import { SidebarTree } from '../components/SidebarTree';
 
 
 export default function ReadArticle() {
   const { id } = useParams();
   const navigate = useNavigate();
   const isAdmin = localStorage.getItem('role') === 'admin';
+
+  const[sidebarTree, setSidebarTree] = useState([]);//stuff for the sidebar
+  const[activeArticleId, setActiveArticleId] = useState(parseInt(id, 10));
 
   const [article, setArticle] = useState(null);
   const [loading, setLoading] = useState(true);

@@ -16,5 +16,24 @@ export function SidebarTree({treeData, activeId, onNodeSelect}){
             :null}
             </TreeItem>
         ));
-    }
+    };
+
+    const handleSelectedItemChange = (event, itemId) => {
+        if(itemId && onNodeSelect){
+            onNodeSelect(parseInt(itemId, 10));
+        }
+    };
+    return(
+        <Box sx={{width: '100%', maxWidth:300, bgcolor: 'Background.paper', p:1}}>
+            <Typography variant="h6" sx={{pl: 1, mb: 2, fontWeight: 'bold'}}>
+                Содержание
+            </Typography>
+            <SimpleTreeView
+            selectItems={activeId ? activeId.toString() : null}
+            onSelectedItemsChange={handleSelectedItemsChange}
+            >
+                {renderTreeNodes(treeData)}
+            </SimpleTreeView>
+        </Box>
+    );
 }
