@@ -29,5 +29,9 @@ public class Article
     public int AuthorId { get; set; }
     public User Author { get; set; } = null!;
 
+    [Column("parent_id")]
+    public int? ParentId {get; set;}
+    public virtual Article? Parent {get; set;}
+    public virtual ICollection<Article> Children{get; set;} = new List<Article>();
     public ICollection<Category> Categories { get; set; } = new List<Category>();
 }

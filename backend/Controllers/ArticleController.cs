@@ -47,6 +47,7 @@ public class ArticleController : ControllerBase
     public async Task<ActionResult<IEnumerable<ArticleReadDto>>> GetArticles()
     {
         var articles = await _context.Articles
+            .Where(a => a.ParentId == null)
             .Include(a => a.Author)
             .Include(a => a.Categories)
             .ToListAsync();
@@ -89,10 +90,61 @@ public class ArticleController : ControllerBase
             UpdatedAt = article.UpdatedAt,
             AuthorId = article.AuthorId,
             AuthorName = article.Author?.Name ?? "Неизвестный автор",
+            ParentId = article.ParentId,
             Categories = article.Categories.Select(c => c.Name).ToList()
         };
 
         return Ok(articleDto);
+    }
+
+    [HttpGet("{id}/sidebar")]
+    public async Task<ActionResult<List<ArticleMenuDto>>> GetSidebarTree(int id)
+    {
+        var current = await _context.Articles.FindAsync(id);
+        if(current == null) return NotFound(new {message = "Статья не найдена"});
+
+        int rootId = current.Id;
+
+        while(current.ParentId != null)
+        {
+            current = await _context.Articles.FindAsync(current.ParentId);
+            if (current != null) rootId = current.Id;
+        }
+
+        var rawArticles = await _context.Articles
+            .FromSqlRaw(@"
+                WITH RECURSIVE ArticleTree AS (
+                SELECT id, title, parent_id, FROM articles WHERE id = {0}
+                UNION ALL
+                SELECT a.id, a.title, a.parent_id
+                FROM articles a
+                INNER JOIN ArticleTree at ON a.parent_id = at.id
+                )
+                SELECT id, title, parent_id, '' as content, NOW() as created_at, NOW() as updated_at, 0 as author_id
+                FROM ArticleTree", rootId)
+            .Select(a => new ArticleMenuDto
+            {
+                Id = a.Id,
+                Title = a.Title,
+                ParentId = a.ParentId
+            })
+            .ToListAsync();
+
+        var dict = rawArticles.ToDictionary(a => a.Id);
+        var rootNodes = new List<ArticleMenuDto>();
+
+        foreach(var item in rawArticles)
+        {
+            if(item.ParentId == null || !dict.ContainsKey(item.ParentId.Value))
+            {
+                rootNodes.Add(item);
+            }
+            else
+            {
+                dict[item.ParentId.Value].Children.Add(item);
+            }
+        }
+        return Ok(rootNodes);
     }
 
     [HttpPost]
@@ -110,6 +162,7 @@ public class ArticleController : ControllerBase
             Title = dto.Title,
             Content = dto.Content,
             AuthorId = dto.AuthorId,
+            ParentId = dto.ParentId,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
@@ -168,6 +221,7 @@ public class ArticleController : ControllerBase
 
         article.Title = dto.Title;
         article.Content = dto.Content;
+        article.ParentId = dto.ParentId;
         article.UpdatedAt = DateTime.UtcNow;
 
         article.Categories.Clear(); // Сбрасываем старые связи
@@ -214,7 +268,7 @@ public class ArticleController : ControllerBase
         return await _context.Articles.AnyAsync(e => e.Id == id);
     }
 
-        [HttpGet("{id}/history")]
+    [HttpGet("{id}/history")]
     [Authorize(Roles = "admin")]
     public async Task<IActionResult> GetArticleHistory(int id)
     {

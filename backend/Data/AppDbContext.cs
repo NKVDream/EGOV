@@ -20,6 +20,13 @@ public class ApplicationDbContext : DbContext
 protected override void OnModelCreating(ModelBuilder modelBuilder)
 {
     base.OnModelCreating(modelBuilder);
+
+    modelBuilder.Entity<Article>()
+        .HasOne(a => a.Parent)
+        .WithMany(a => a.Children)
+        .HasForeignKey(a => a.ParentId)
+        .OnDelete(DeleteBehavior.Cascade);
+        
     modelBuilder.Entity<Article>()
         .HasMany(a => a.Categories)
         .WithMany(c => c.Articles)

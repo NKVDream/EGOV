@@ -10,5 +10,7 @@ public class ArticleReadDto
     
     public int AuthorId { get; set; }
     public string AuthorName { get; set; } = null!;
+
+    public int? ParentId {get; set;}
     public List<string> Categories { get; set; } = new();
 }

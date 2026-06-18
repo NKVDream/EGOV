@@ -14,5 +14,7 @@ public class ArticleCreateDto
     [Required]
     public int AuthorId { get; set; }
 
+    public int? ParentId{get; set;}
+
     public List<int> CategoryIds { get; set; } = new();
 }
