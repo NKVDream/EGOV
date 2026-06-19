@@ -1,7 +1,7 @@
 -- 1. Таблица ролей
 CREATE TABLE roles (
     id smallserial PRIMARY KEY,
-    name varchar(50) NOT NULL UNIQUE,       -- 'admin', 'user', 'moderator'
+    name varchar(50) NOT NULL UNIQUE,       -- 'admin', 'user'
     description text NULL
 );
 

@@ -45,6 +45,10 @@ protected override void OnModelCreating(ModelBuilder modelBuilder)
             j => j
                 .ToTable("article_category") 
         );
+            modelBuilder.Entity<Role>().HasData(
+        new Role { Id = 1, Name = "admin", Description = "Администратор системы с полными правами" },
+        new Role { Id = 2, Name = "user", Description = "Обычный зарегистрированный пользователь" }
+    );
 }
 
 }

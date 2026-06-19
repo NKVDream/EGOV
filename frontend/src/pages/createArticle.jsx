@@ -1,27 +1,57 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { 
-  Box, TextField, Button, Typography, Paper, Container, 
-  CircularProgress, Alert, MenuItem, Select, InputLabel, FormControl, Chip, OutlinedInput
+  Box, TextField, Button, Typography, Container, 
+  CircularProgress, Alert, MenuItem, Select, InputLabel, 
+  FormControl, Chip, OutlinedInput, Divider
 } from '@mui/material';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 export default function CreateArticle() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const isEditMode = Boolean(id); // Флаг: true — редактирование, false — создание
+  const location = useLocation();
+  
+  const isEditMode = Boolean(id);
 
   // Состояния для полей формы
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [selectedCategories, setSelectedCategories] = useState([]); // Выбранные ID категорий
-  
+  const [selectedCategories, setSelectedCategories] = useState([]);
+  const [parentId, setParentId] = useState(null);
+  const [parentTitle, setParentTitle] = useState('');
+
   // Системные состояния
-  const [categoriesList, setCategoriesList] = useState([]); // Список всех категорий для выпадающего меню
+  const [categoriesList, setCategoriesList] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  useEffect(() => {//Загружаем список всех доступных категорий
+  // 1. Извлекаем parentId из URL при создании подстатьи
+  useEffect(() => {
+    if (!isEditMode) {
+      const queryParams = new URLSearchParams(location.search);
+      const urlParentId = queryParams.get('parentId');
+      if (urlParentId) {
+        setParentId(parseInt(urlParentId, 10));
+      }
+    }
+  }, [location.search, isEditMode]);
+
+  // 2. Подгружаем название родительской статьи вместо вывода её ID
+  useEffect(() => {
+    if (parentId) {
+      fetch(`http://localhost:5170/api/Article/${parentId}`)
+        .then((res) => {
+          if (res.ok) return res.json();
+          throw new Error();
+        })
+        .then((data) => setParentTitle(data.title || data.Title))
+        .catch(() => setParentTitle(`Статья #${parentId}`));
+    }
+  }, [parentId]);
+
+  useEffect(() => {
     async function loadCategories() {
       try {
         const response = await fetch('http://localhost:5170/api/Category');
@@ -35,7 +65,7 @@ export default function CreateArticle() {
     }
     loadCategories();
 
-    if (isEditMode) {//будучи в режиме редактирования -> подтягиваем старые данные
+    if (isEditMode) {
       async function fetchArticleData() {
         setLoading(true);
         try {
@@ -44,6 +74,7 @@ export default function CreateArticle() {
             const data = await response.json();
             setTitle(data.title || data.Title);
             setContent(data.content || data.Content);
+            setParentId(data.parentId || data.ParentId || null);
             if (data.categoryIds || data.CategoryIds) {
               setSelectedCategories(data.categoryIds || data.CategoryIds);
             }
@@ -60,7 +91,7 @@ export default function CreateArticle() {
     }
   }, [id, isEditMode]);
 
-  const handleSubmit = async (e) => {// отправка формы
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setSuccess('');
@@ -77,12 +108,13 @@ export default function CreateArticle() {
       title: title.trim(),
       content: content.trim(),
       authorId: authorId,
+      parentId: parentId,
       categoryIds: selectedCategories
     };
 
     setLoading(true);
     try {
-      const url = isEditMode// метод в зависимости от режима
+      const url = isEditMode
         ? `http://localhost:5170/api/Article/${id}` 
         : 'http://localhost:5170/api/Article';
       
@@ -92,23 +124,26 @@ export default function CreateArticle() {
         method: method,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}` //Передаем токен
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(articleDto)
       });
 
-    if (response.ok) {
-      setSuccess(isEditMode ? 'Статья успешно обновлена!' : 'Статья успешно создана!');
-      
-      setTimeout(() => {
-        if (isEditMode) {
-          navigate(`/article/${id}`); 
-        } else {
-          navigate('/home'); 
-        }
-      }, 1500);
-    }
-else {
+      if (response.ok) {
+        setSuccess(isEditMode ? 'Статья успешно обновлена!' : 'Статья успешно создана!');
+        
+        setTimeout(() => {
+          if (isEditMode) {
+            navigate(`/article/${id}`); 
+          } else {
+            if (parentId) {
+              navigate(`/article/${parentId}`);
+            } else {
+              navigate('/home'); 
+            }
+          }
+        }, 1500);
+      } else {
         const errorData = await response.json();
         setError(errorData.message || 'Произошла ошибка при сохранении статьи.');
       }
@@ -128,57 +163,56 @@ else {
   }
 
   return (
-  <Box 
-    sx={{ 
-      display: 'flex', 
-      justifyContent: 'center', 
-      alignItems: 'flex-start',
-      minHeight: '100vh',
-      backgroundColor: '#f5f5f5',
-      pt: 5,
-      pb: 5,
-      width: '100vw'
-    }}
-  >
-    <Container 
-      maxWidth="lg" 
-      disableGutters
-      sx={{ 
-        width: '100%',
-        mx: 'auto'
-      }}
-    >
-      <Paper 
-        elevation={3} 
-        sx={{ 
-          p: 4, 
-          borderRadius: 3,
-          width: '100%',
-          boxSizing: 'border-box'
-        }}
-      >
-        <Typography variant="h4" fontWeight="bold" gutterBottom>
-          {isEditMode ? 'Редактирование статьи' : 'Создание новой статьи'}
+    <Box sx={{ width: '100%', minHeight: '100vh', backgroundColor: '#f9f9f9', boxSizing: 'border-box', px: { xs: 2, md: 4 }, pt: 4, pb: 5 }}>
+      <Container maxWidth="md" disableGutters sx={{ width: '100%', mx: 'auto' }}>
+        
+        {/* КНОПКА НАЗАД */}
+        <Button 
+          startIcon={<ArrowBackIcon />} 
+          onClick={() => parentId ? navigate(`/article/${parentId}`) : navigate('/home')} 
+          sx={{ mb: 3, textTransform: 'none', fontWeight: 'bold' }} 
+          color="inherit"
+        >
+          Назад
+        </Button>
+
+        {/* ЗАГОЛОВКА С СИНЕЙ ЛИНИЕЙ (КАК НА СТРАНИЦЕ ЧТЕНИЯ) */}
+        <Box sx={(theme) => ({ borderLeft: `6px solid ${theme.palette.primary.main}`, pl: 2, mb: 1, width: '100%', boxSizing: 'border-box' })}>
+          <Typography variant="h3" component="h1" fontWeight="bold" sx={{ fontSize: { xs: '2.2rem', md: '3.2rem' }, color: 'text.primary', lineHeight: 1.2 }}>
+            {isEditMode ? 'Редактирование статьи' : 'Создание новой статьи'}
+          </Typography>
+        </Box>
+
+        {/* ПОДСКАЗКА С НАЗВАНИЕМ РОДИТЕЛЬСКОЙ СТАТЬИ */}
+        {!isEditMode && parentId && (
+          <Typography variant="subtitle1" sx={{ pl: 2, mb: 2, color: 'primary.main', fontWeight: '500' }}>
+            Эта статья создается как подстатья к: <strong>«{parentTitle || 'Загрузка...'}»</strong>
+          </Typography>
+        )}
+
+        <Typography variant="body2" color="text.secondary" sx={{ pl: 2, mb: 3 }}>
+          Изменения будут сохранены в общую базу знаний EgovWiki.
         </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-          Заполните форму ниже. Изменения будут сохранены в общую базу EgovWiki.
-        </Typography>
+
+        <Divider sx={{ mb: 4 }} />
 
         {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
         {success && <Alert severity="success" sx={{ mb: 3 }}>{success}</Alert>}
 
-        <Box component="form" onSubmit={handleSubmit} noValidate>
+        <Box component="form" onSubmit={handleSubmit} noValidate sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          
           <TextField
-            margin="normal"
             required
             fullWidth
             label="Название статьи"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             disabled={loading}
+            variant="outlined"
+            sx={{ backgroundColor: '#ffffff', borderRadius: 1 }}
           />
 
-          <FormControl fullWidth margin="normal">
+          <FormControl fullWidth sx={{ backgroundColor: '#ffffff', borderRadius: 1 }}>
             <InputLabel id="categories-label">Категории</InputLabel>
             <Select
               labelId="categories-label"
@@ -190,7 +224,7 @@ else {
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                   {selected.map((value) => {
                     const cat = categoriesList.find(c => c.id === value || c.Id === value);
-                    return <Chip key={value} label={cat ? (cat.name || cat.Name) : value} />;
+                    return <Chip key={value} label={cat ? (cat.name || cat.Name) : value} size="small" />;
                   })}
                 </Box>
               )}
@@ -204,47 +238,54 @@ else {
           </FormControl>
 
           <TextField
-            margin="normal"
             required
             fullWidth
             multiline
-            rows={12}
-            label="Содержимое статьи (Поддерживает только текст)"
+            rows={14}
+            label="Содержимое статьи"
             value={content}
             onChange={(e) => setContent(e.target.value)}
             disabled={loading}
-            sx={{ mt: 2 }}
-              inputProps={{ 
+            variant="outlined"
+            sx={{ backgroundColor: '#ffffff', borderRadius: 1 }}
+            inputProps={{ 
               spellCheck: true, 
-              lang: 'ru'
+              lang: 'ru',
+              style: { fontFamily: 'inherit', lineHeight: '1.6' }
             }} 
           />
 
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 3 }}>
+          {/* КНОПКИ УПРАВЛЕНИЯ */}
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 1 }}>
             <Button 
               variant="outlined" 
               color="inherit" 
-              onClick={() => navigate('/home')}
+              onClick={() => parentId ? navigate(`/article/${parentId}`) : navigate('/home')}
               disabled={loading}
+              sx={{ textTransform: 'none', fontWeight: 'bold' }}
             >
               Отмена
             </Button>
+            
             <Button
               type="submit"
               variant="contained"
               disabled={loading}
               sx={{
                 backgroundImage: 'linear-gradient(147deg, #fe8a39 0%, #fd3838 74%)',
-                px: 4,
-                fontWeight: 'bold'
+                px: 5,
+                py: 1.2,
+                fontWeight: 'bold',
+                textTransform: 'none',
+                boxShadow: '0px 4px 12px rgba(253, 56, 56, 0.3)'
               }}
             >
               {loading ? <CircularProgress size={24} color="inherit" /> : isEditMode ? 'Сохранить изменения' : 'Опубликовать'}
             </Button>
           </Box>
+
         </Box>
-      </Paper>
-    </Container>
-  </Box>
-);
+      </Container>
+    </Box>
+  );
 }

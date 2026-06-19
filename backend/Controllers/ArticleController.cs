@@ -98,54 +98,64 @@ public class ArticleController : ControllerBase
     }
 
     [HttpGet("{id}/sidebar")]
-    public async Task<ActionResult<List<ArticleMenuDto>>> GetSidebarTree(int id)
+public async Task<ActionResult<List<ArticleMenuDto>>> GetSidebarTree(int id)
+{
+    // 1. Быстро проверяем, существует ли запрашиваемая статья
+    var currentArticle = await _context.Articles
+        .Select(a => new { a.Id, a.ParentId })
+        .FirstOrDefaultAsync(a => a.Id == id);
+
+    if (currentArticle == null) 
+        return NotFound(new { message = "Статья не найдена" });
+
+    // 2. Вытягиваем из базы ТОЛЬКО нужные для меню поля для ВСЕХ статей.
+    // Запрос получается сверхлегким, так как мы игнорируем поле 'content' (текст статей).
+    var allNodes = await _context.Articles
+        .AsNoTracking() // Отключаем трекинг для максимальной производительности
+        .Select(a => new ArticleMenuDto
+        {
+            Id = a.Id,
+            Title = a.Title,
+            ParentId = a.ParentId,
+            Children = new List<ArticleMenuDto>() // Гарантируем инициализацию списка
+        })
+        .ToListAsync();
+
+    // 3. Строим словарь для мгновенного поиска O(1)
+    var dict = allNodes.ToDictionary(n => n.Id);
+    
+    // Ищем ID корневого элемента для ветки, в которой находится текущая статья
+    int rootId = currentArticle.Id;
+    int? parentId = currentArticle.ParentId;
+
+    while (parentId != null && dict.TryGetValue(parentId.Value, out var parentNode))
     {
-        var current = await _context.Articles.FindAsync(id);
-        if(current == null) return NotFound(new {message = "Статья не найдена"});
-
-        int rootId = current.Id;
-
-        while(current.ParentId != null)
-        {
-            current = await _context.Articles.FindAsync(current.ParentId);
-            if (current != null) rootId = current.Id;
-        }
-
-        var rawArticles = await _context.Articles
-            .FromSqlRaw(@"
-                WITH RECURSIVE ArticleTree AS (
-                SELECT id, title, parent_id, FROM articles WHERE id = {0}
-                UNION ALL
-                SELECT a.id, a.title, a.parent_id
-                FROM articles a
-                INNER JOIN ArticleTree at ON a.parent_id = at.id
-                )
-                SELECT id, title, parent_id, '' as content, NOW() as created_at, NOW() as updated_at, 0 as author_id
-                FROM ArticleTree", rootId)
-            .Select(a => new ArticleMenuDto
-            {
-                Id = a.Id,
-                Title = a.Title,
-                ParentId = a.ParentId
-            })
-            .ToListAsync();
-
-        var dict = rawArticles.ToDictionary(a => a.Id);
-        var rootNodes = new List<ArticleMenuDto>();
-
-        foreach(var item in rawArticles)
-        {
-            if(item.ParentId == null || !dict.ContainsKey(item.ParentId.Value))
-            {
-                rootNodes.Add(item);
-            }
-            else
-            {
-                dict[item.ParentId.Value].Children.Add(item);
-            }
-        }
-        return Ok(rootNodes);
+        rootId = parentNode.Id;
+        parentId = parentNode.ParentId;
     }
+
+    // 4. Собираем иерархическую структуру в памяти
+    var rootNodes = new List<ArticleMenuDto>();
+
+    foreach (var item in allNodes)
+    {
+        // Если элемент является корнем всей нашей цепочки
+        if (item.Id == rootId)
+        {
+            rootNodes.Add(item);
+        }
+        // Если у элемента есть родитель, и этот родитель присутствует в нашем словаре
+        else if (item.ParentId != null && dict.TryGetValue(item.ParentId.Value, out var parentNode))
+        {
+            parentNode.Children.Add(item);
+        }
+    }
+
+    // Возвращаем дерево, отфильтрованное от корня запрашиваемой ветки вниз
+    return Ok(rootNodes);
+}
+
+
 
     [HttpPost]
     [Authorize(Roles = "admin")]

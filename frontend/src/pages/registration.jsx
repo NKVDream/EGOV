@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import '../App.css';
-import {TextField, Button, Box, Typography, Divider, InputAdornment, IconButton} from '@mui/material';
+import {TextField, Button, Box, Typography, Divider, InputAdornment, IconButton, CircularProgress} from '@mui/material';
 import {Visibility, VisibilityOff} from '@mui/icons-material';
 
 export default function Registration() {
