@@ -6,7 +6,9 @@ import {
   Dialog, DialogTitle, DialogContent, DialogActions, 
   List, ListItem, ListItemText 
 } from '@mui/material';
-import HistoryIcon from '@mui/icons-material/History'; 
+import HistoryIcon from '@mui/icons-material/History';
+import MenuIcon from '@mui/icons-material/Menu';
+import MenuOpenIcon from '@mui/icons-material/MenuOpen';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import PersonIcon from '@mui/icons-material/Person';
@@ -23,6 +25,7 @@ export default function ReadArticle() {
   const navigate = useNavigate();
   const isAdmin = localStorage.getItem('role') === 'admin';
 
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [sidebarTree, setSidebarTree] = useState([]); // Состояние для дерева меню
   const [activeArticleId, setActiveArticleId] = useState(parseInt(id, 10));
 
@@ -211,120 +214,132 @@ const handleRollback = async (versionId) => {
   const categories = article?.categories || article?.Categories || [];
 
     return (
-    <Layout>
-      {/* 🟢 Внешний Flex-контейнер для разделения на Сайдбар и Контент */}
-      <Box sx={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f9f9f9' }}>
+  <Layout>
+    <Box sx={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f9f9f9', position: 'relative' }}>
+      
+      {/* ЛЕВАЯ КОЛОНКА: Боковая панель */}
+      <Box sx={{ 
+        width: isSidebarOpen ? '320px' : '0px',
+        minWidth: isSidebarOpen ? { xs: '100%', md: '320px' } : '0px',
+        overflow: 'hidden',
+        transition: 'width 0.25s cubic-bezier(0.4, 0, 0.2, 1), min-width 0.25s ease',
+        backgroundColor: '#ffffff',
+        borderRight: isSidebarOpen ? '1px solid #e0e0e0' : 'none',
+        zIndex: 5,
+        position: { xs: 'absolute', md: 'relative' },
+        height: { xs: '100%', md: 'auto' },
+        display: 'flex',
+        flexDirection: 'column'
+      }}>
+        {/* Шапка сайдбара с кнопкой скрытия меню */}
+        {isSidebarOpen && (
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', p: 1, pr: 2, borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
+            <Tooltip title="Скрыть содержание">
+              <IconButton onClick={() => setIsSidebarOpen(false)} size="small" sx={{ color: 'text.secondary' }}>
+                <MenuOpenIcon />
+              </IconButton>
+            </Tooltip>
+          </Box>
+        )}
         
-        {/* 🟢 Левая колонка: Бесконечное древовидное меню */}
-        <Box sx={{ 
-          width: { xs: '100%', md: '300px' }, 
-          minWidth: { md: '300px' },
-          display: { xs: 'none', sm: 'block' }, // Прячем на мобилках, если экран совсем маленький
-          backgroundColor: '#ffffff',
-          borderRight: '1px solid #e0e0e0',
-          pt: 4
-        }}>
+        {/* Дерево статей */}
+        <Box sx={{ flexGrow: 1, overflowY: 'auto' }}>
           <SidebarTree 
             treeData={sidebarTree} 
             activeId={activeArticleId} 
             onNodeSelect={handleNodeSelect} 
           />
         </Box>
+      </Box>
 
-        {/* Правая колонка: Основной контент статьи */}
-        <Box sx={{ flexGrow: 1, boxSizing: 'border-box', px: { xs: 2, md: 4 }, pt: 4, pb: 5 }}>
-          <Box sx={{ maxWidth: '900px', width: '100%', mx: 'auto', position: 'relative' }}>
-            
-            {/* КНОПКА НАЗАД */}
-            <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/home')} sx={{ mb: 3, textTransform: 'none', fontWeight: 'bold' }} color="inherit">
-              Назад
-            </Button>
+      {/* 🟢 КНОПКА «ОТКРЫТЬ САЙДБАР» (Теперь она фиксированная и парит слева, не сдвигая верстку статьи) */}
+      {!isSidebarOpen && (
+        <Box sx={{ position: 'fixed', top: 85, left: 24, zIndex: 10 }}>
+          <Tooltip title="Открыть содержание" placement="right">
+            <IconButton 
+              onClick={() => setIsSidebarOpen(true)}
+              sx={{ 
+                backgroundColor: '#ffffff', 
+                border: '1px solid #e0e0e0',
+                boxShadow: '0px 2px 6px rgba(0,0,0,0.05)', 
+                '&:hover': { backgroundColor: '#f5f5f5' } 
+              }}
+            >
+              <MenuIcon />
+            </IconButton>
+          </Tooltip>
+        </Box>
+      )}
 
-            {/* БЛОК КНОПОК ДЛЯ АДМИНИСТРАТОРА */}
-            {isAdmin && (
-              <Box sx={{ position: 'absolute', top: 45, right: 0, display: 'flex', gap: 1, zIndex: 2 }}>
+      {/* ПРАВАЯ КОЛОНКА: Контент статьи (Исправлено: убраны динамические padding-отступы) */}
+      <Box sx={{ 
+        flexGrow: 1, 
+        boxSizing: 'border-box', 
+        px: { xs: 3, md: 6 }, 
+        pt: 5, 
+        pb: 6
+      }}>
+        <Box sx={{ maxWidth: '850px', width: '100%', mx: 'auto', position: 'relative' }}>
+          
+          {/* КНОПКА НАЗАД */}
+          <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/home')} sx={{ mb: 4, textTransform: 'none', fontWeight: 'bold' }} color="inherit">
+            Назад
+          </Button>
 
-                {/*НОВАЯ КНОПКА: Создать подстатью */}
-                <Tooltip title="Создать подстатью">
-                  <IconButton 
-                    color="success"
-                    // Передаем ID текущей статьи как parentId в Query-параметрах URL
-                    onClick={() => navigate(`/article/create?parentId=${id}`)}
-                    sx={{ backgroundColor: '#ffffff', boxShadow: '0px 2px 8px rgba(0,0,0,0.1)', '&:hover': { backgroundColor: '#f5fff5' } }}
-                  >
-                    <AddIcon />
-                  </IconButton>
-                </Tooltip>
-                
-                {/* Кнопка «История изменений» */}
-                <Tooltip title="История изменений">
-                  <IconButton 
-                    color="default"
-                    onClick={handleOpenHistory}
-                    sx={{ backgroundColor: '#ffffff', boxShadow: '0px 2px 8px rgba(0,0,0,0.1)', '&:hover': { backgroundColor: '#f5f5f5' } }}
-                  >
-                    <HistoryIcon />
-                  </IconButton>
-                </Tooltip>
+          {/* БЛОК КНОПОК ДЛЯ АДМИНИСТРАТОРА (Теперь они жестко привязаны к контейнеру статьи) */}
+          {isAdmin && (
+            <Box sx={{ position: 'absolute', top: 0, right: 0, display: 'flex', gap: 1, zIndex: 2 }}>
+              <Tooltip title="Создать подстатью">
+                <IconButton color="success" onClick={() => navigate(`/article/create?parentId=${id}`)} sx={{ backgroundColor: '#ffffff', boxShadow: '0px 2px 8px rgba(0,0,0,0.08)' }}><AddIcon /></IconButton>
+              </Tooltip>
+              <Tooltip title="История изменений">
+                <IconButton color="default" onClick={handleOpenHistory} sx={{ backgroundColor: '#ffffff', boxShadow: '0px 2px 8px rgba(0,0,0,0.08)' }}><HistoryIcon /></IconButton>
+              </Tooltip>
+              <Tooltip title="Редактировать статью">
+                <IconButton color="primary" onClick={() => navigate(`/article/edit/${id}`)} sx={{ backgroundColor: '#ffffff', boxShadow: '0px 2px 8px rgba(0,0,0,0.08)' }}><EditIcon /></IconButton>
+              </Tooltip>
+              <Tooltip title="Удалить статью">
+                <IconButton color="error" onClick={handleDelete} sx={{ backgroundColor: '#ffffff', boxShadow: '0px 2px 8px rgba(0,0,0,0.08)' }}><DeleteIcon /></IconButton>
+              </Tooltip>
+            </Box>
+          )}
 
-                <Tooltip title="Редактировать статью">
-                  <IconButton 
-                    color="primary"
-                    onClick={() => navigate(`/article/edit/${id}`)}
-                    sx={{ backgroundColor: '#ffffff', boxShadow: '0px 2px 8px rgba(0,0,0,0.1)', '&:hover': { backgroundColor: '#f5f5f5' } }}
-                  >
-                    <EditIcon />
-                  </IconButton>
-                </Tooltip>
-                
-                <Tooltip title="Удалить статью">
-                  <IconButton 
-                    color="error"
-                    onClick={handleDelete}
-                    sx={{ backgroundColor: '#ffffff', boxShadow: '0px 2px 8px rgba(0,0,0,0.1)', '&:hover': { backgroundColor: '#fff5f5' } }}
-                  >
-                    <DeleteIcon />
-                  </IconButton>
-                </Tooltip>
+          {/* БЛОК ЗАГОЛОВКА */}
+          <Box sx={(theme) => ({ borderLeft: `6px solid ${theme.palette.primary.main}`, pl: 2.5, mb: 3, width: '100%' })}>
+            <Typography variant="h3" component="h1" fontWeight="bold" sx={{ fontSize: { xs: '2.2rem', md: '3rem' }, color: 'text.primary', lineHeight: 1.2, pr: isAdmin ? { xs: 18, md: 22 } : 0 }}>
+              {titleText}
+            </Typography>
+          </Box>
+
+          {/* МЕТА-ИНФОРМАЦИЯ */}
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 3, mt: 2, mb: 4, color: 'text.secondary' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <PersonIcon fontSize="small" />
+              <Typography variant="body2" fontWeight="medium">{authorName}</Typography>
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <CalendarTodayIcon fontSize="small" />
+              <Typography variant="body2">{dateText}</Typography>
+            </Box>
+            {categories.length > 0 && (
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, ml: { md: 'auto' } }}>
+                {categories.map((cat, idx) => (
+                  <Chip key={idx} label={typeof cat === 'object' ? (cat.name || cat.Name) : cat} size="small" variant="outlined" sx={{ fontWeight: '500', backgroundColor: '#ffffff' }} />
+                ))}
               </Box>
             )}
-
-            {/* БЛОК ЗАГОЛОВКА */}
-            <Box sx={(theme) => ({ borderLeft: `6px solid ${theme.palette.primary.main}`, pl: 2, mb: 3, width: '100%', boxSizing: 'border-box' })}>
-              <Typography variant="h3" component="h1" fontWeight="bold" sx={{ fontSize: { xs: '2.2rem', md: '3.2rem' }, color: 'text.primary', lineHeight: 1.2, pr: isAdmin ? { xs: 18, md: 22 } : 0 }}>
-                {titleText}
-              </Typography>
-            </Box>
-
-            {/* МЕТА-ИНФОРМАЦИЯ */}
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 3, mt: 2, mb: 3, color: 'text.secondary' }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                <PersonIcon fontSize="small" />
-                <Typography variant="body2" fontWeight="medium">{authorName}</Typography>
-              </Box>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                <CalendarTodayIcon fontSize="small" />
-                <Typography variant="body2">{dateText}</Typography>
-              </Box>
-              {categories.length > 0 && (
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, ml: { md: 'auto' } }}>
-                  {categories.map((cat, idx) => (
-                    <Chip key={idx} label={typeof cat === 'object' ? (cat.name || cat.Name) : cat} size="small" variant="outlined" sx={{ fontWeight: '500', backgroundColor: '#ffffff' }} />
-                  ))}
-                </Box>
-              )}
-            </Box>
-
-            <Divider sx={{ mb: 4 }} />
-
-            {/* СОДЕРЖИМОЕ СТАТЬИ */}
-            <Typography variant="body1" sx={{ fontSize: '1.2rem', lineHeight: '1.8', color: '#2c3e50', whiteSpace: 'pre-line', wordBreak: 'break-word' }}>
-              {contentText}
-            </Typography>
-
           </Box>
+
+          <Divider sx={{ mb: 4 }} />
+
+          {/* СОДЕРЖИМОЕ СТАТЬИ */}
+          <Typography variant="body1" sx={{ fontSize: '1.15rem', lineHeight: '1.85', color: '#2c3e50', whiteSpace: 'pre-line', wordBreak: 'break-word' }}>
+            {contentText}
+          </Typography>
+
         </Box>
       </Box>
+    </Box>
 
       {/* Модальное окно истории изменений (осталось без изменений) */}
       <Dialog 
