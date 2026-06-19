@@ -25,8 +25,9 @@ export default function ReadArticle() {
   const navigate = useNavigate();
   const isAdmin = localStorage.getItem('role') === 'admin';
 
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [sidebarTree, setSidebarTree] = useState([]); // Состояние для дерева меню
+  // 🟢 ВСЕ СТ ChouСЕ СТЕЙТЫ ДОЛЖНЫ БЫТЬ ОБЪЯВЛЕНЫ СТРОГО ПО ОДНОМУ РАЗУ:
+  const [sidebarTree, setSidebarTree] = useState([]); 
+  const [expandedItems, setExpandedItems] = useState([]); // Наш новый стейт для путей папок
   const [activeArticleId, setActiveArticleId] = useState(parseInt(id, 10));
 
   const [article, setArticle] = useState(null);
@@ -38,25 +39,54 @@ export default function ReadArticle() {
   const [historyList, setHistoryList] = useState([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
 
-  // 1. ИСПРАВЛЕНО: Загрузка дерева бокового меню (исправлены кавычки в URL)
-  useEffect(() => {
-    if (id) {
-      fetch(`http://localhost:5170/api/Article/${id}/sidebar`)
-        .then((res) => {
-          if (!res.ok) throw new Error("Не удалось загрузить меню");
-          return res.json();
-        })
-        .then((data) => setSidebarTree(data))
-        .catch((err) => console.error("Ошибка загрузки бокового меню:", err));
-    }
-  }, [id]);
+  // Стейт для закрытия/открытия сайдбара
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
-  // 2. Синхронизация ID из URL с внутренним состоянием активной статьи
   useEffect(() => {
-    if (id) {
-      setActiveArticleId(parseInt(id, 10));
-    }
-  }, [id]);
+  if (id) {
+    fetch(`http://localhost:5170/api/Article/${id}/sidebar`)
+      .then((res) => {
+        if (!res.ok) throw new Error("Ошибка загрузки");
+        return res.json();
+      })
+      .then((data) => {
+        // 🟢 ТАК КАК В КОНСОЛИ ЧИСТЫЙ МАССИВ: записываем data напрямую!
+        const nodes = Array.isArray(data) ? data : [];
+        setSidebarTree(nodes);
+
+        // Автоматически вычисляем цепочку раскрытия прямо на фронтенде,
+        // чтобы вообще не трогать и не ломать бэкенд!
+        const expanded = [];
+        const findActivePath = (items) => {
+          for (const item of items) {
+            const currentId = item.id !== undefined ? item.id : item.Id;
+            const currentChildren = item.children || item.Children;
+            
+            // Если нашли текущую статью, возвращаем true
+            if (currentId === parseInt(id, 10)) return true;
+
+            // Ищем вглубь по подстатьям
+            if (currentChildren && currentChildren.length > 0) {
+              const found = findActivePath(currentChildren);
+              if (found) {
+                expanded.push(currentId.toString());
+                return true;
+              }
+            }
+          }
+          return false;
+        };
+
+        findActivePath(nodes);
+        setExpandedItems(expanded);
+      })
+      .catch((err) => {
+        console.error("Ошибка в fetch сайдбара:", err);
+        setSidebarTree([]);
+      });
+  }
+}, [id]);
+
 
   // 3. Функция загрузки самой статьи
   const fetchArticle = async () => {
@@ -217,40 +247,49 @@ const handleRollback = async (versionId) => {
   <Layout>
     <Box sx={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f9f9f9', position: 'relative' }}>
       
-      {/* ЛЕВАЯ КОЛОНКА: Боковая панель */}
-      <Box sx={{ 
-        width: isSidebarOpen ? '320px' : '0px',
-        minWidth: isSidebarOpen ? { xs: '100%', md: '320px' } : '0px',
-        overflow: 'hidden',
-        transition: 'width 0.25s cubic-bezier(0.4, 0, 0.2, 1), min-width 0.25s ease',
-        backgroundColor: '#ffffff',
-        borderRight: isSidebarOpen ? '1px solid #e0e0e0' : 'none',
-        zIndex: 5,
-        position: { xs: 'absolute', md: 'relative' },
-        height: { xs: '100%', md: 'auto' },
-        display: 'flex',
-        flexDirection: 'column'
-      }}>
-        {/* Шапка сайдбара с кнопкой скрытия меню */}
-        {isSidebarOpen && (
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', p: 1, pr: 2, borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
-            <Tooltip title="Скрыть содержание">
-              <IconButton onClick={() => setIsSidebarOpen(false)} size="small" sx={{ color: 'text.secondary' }}>
-                <MenuOpenIcon />
-              </IconButton>
-            </Tooltip>
-          </Box>
-        )}
-        
-        {/* Дерево статей */}
-        <Box sx={{ flexGrow: 1, overflowY: 'auto' }}>
-          <SidebarTree 
-            treeData={sidebarTree} 
-            activeId={activeArticleId} 
-            onNodeSelect={handleNodeSelect} 
-          />
-        </Box>
+        {/* ЛЕВАЯ КОЛОНКА: Боковая панель */}
+  <Box sx={{ 
+    width: isSidebarOpen ? '320px' : '0px',
+    minWidth: isSidebarOpen ? { xs: '100%', md: '320px' } : '0px',
+    overflow: 'hidden',
+    transition: 'width 0.25s cubic-bezier(0.4, 0, 0.2, 1), min-width 0.25s ease',
+    backgroundColor: '#ffffff',
+    borderRight: isSidebarOpen ? '1px solid #e0e0e0' : 'none',
+    zIndex: 5,
+    position: { xs: 'absolute', md: 'relative' },
+    height: { xs: '100%', md: 'auto' },
+    display: 'flex',
+    flexDirection: 'column'
+  }}>
+    {/* Шапка сайдбара с кнопкой скрытия меню */}
+    {isSidebarOpen && (
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', p: 1, pr: 2, borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
+        <Tooltip title="Скрыть содержание">
+          <IconButton onClick={() => setIsSidebarOpen(false)} size="small" sx={{ color: 'text.secondary' }}>
+            <MenuOpenIcon />
+          </IconButton>
+        </Tooltip>
       </Box>
+    )}
+    
+    {/* Само дерево статей */}
+    <Box sx={{ flexGrow: 1, overflowY: 'auto' }}>
+      {/* 🟢 ДОБАВЛЕНА ПРОВЕРКА: Если данные пришли, рендерим компонент дерева */}
+      {sidebarTree && sidebarTree.length > 0 ? (
+        <SidebarTree 
+          treeData={sidebarTree} 
+          activeId={activeArticleId} 
+          expandedItems={expandedItems} 
+          onNodeSelect={handleNodeSelect} 
+        />
+      ) : (
+        // Временная заглушка во время загрузки, чтобы сайдбар не выглядел абсолютно пустым
+        <Typography variant="body2" color="text.secondary" sx={{ p: 3, textAlign: 'center' }}>
+          Загрузка содержания...
+        </Typography>
+      )}
+    </Box>
+  </Box>
 
       {/* 🟢 КНОПКА «ОТКРЫТЬ САЙДБАР» (Теперь она фиксированная и парит слева, не сдвигая верстку статьи) */}
       {!isSidebarOpen && (

@@ -97,10 +97,9 @@ public class ArticleController : ControllerBase
         return Ok(articleDto);
     }
 
-    [HttpGet("{id}/sidebar")]
-public async Task<ActionResult<List<ArticleMenuDto>>> GetSidebarTree(int id)
+[HttpGet("{id}/sidebar")]
+public async Task<ActionResult<SidebarResponseDto>> GetSidebarTree(int id)
 {
-    // 1. Быстро проверяем, существует ли запрашиваемая статья
     var currentArticle = await _context.Articles
         .Select(a => new { a.Id, a.ParentId })
         .FirstOrDefaultAsync(a => a.Id == id);
@@ -108,51 +107,60 @@ public async Task<ActionResult<List<ArticleMenuDto>>> GetSidebarTree(int id)
     if (currentArticle == null) 
         return NotFound(new { message = "Статья не найдена" });
 
-    // 2. Вытягиваем из базы ТОЛЬКО нужные для меню поля для ВСЕХ статей.
-    // Запрос получается сверхлегким, так как мы игнорируем поле 'content' (текст статей).
     var allNodes = await _context.Articles
-        .AsNoTracking() // Отключаем трекинг для максимальной производительности
+        .AsNoTracking()
         .Select(a => new ArticleMenuDto
         {
             Id = a.Id,
             Title = a.Title,
             ParentId = a.ParentId,
-            Children = new List<ArticleMenuDto>() // Гарантируем инициализацию списка
+            Children = new List<ArticleMenuDto>()
         })
         .ToListAsync();
 
-    // 3. Строим словарь для мгновенного поиска O(1)
     var dict = allNodes.ToDictionary(n => n.Id);
     
-    // Ищем ID корневого элемента для ветки, в которой находится текущая статья
+    // 🟢 ВЫЧИСЛЯЕМ ПУТЬ СТАТЬИ ДЛЯ АВТО-РАСКРЫТИЯ
+    var expandedIds = new List<string>();
+    int? currentParentId = currentArticle.ParentId;
+    
+    while (currentParentId != null && dict.TryGetValue(currentParentId.Value, out var pNode))
+    {
+        expandedIds.Add(pNode.Id.ToString()); 
+        currentParentId = pNode.ParentId;
+    }
+
+    // Ищем корень всей ветки
     int rootId = currentArticle.Id;
     int? parentId = currentArticle.ParentId;
-
     while (parentId != null && dict.TryGetValue(parentId.Value, out var parentNode))
     {
         rootId = parentNode.Id;
         parentId = parentNode.ParentId;
     }
 
-    // 4. Собираем иерархическую структуру в памяти
+    // Собираем дерево в памяти
     var rootNodes = new List<ArticleMenuDto>();
-
     foreach (var item in allNodes)
     {
-        // Если элемент является корнем всей нашей цепочки
         if (item.Id == rootId)
         {
             rootNodes.Add(item);
         }
-        // Если у элемента есть родитель, и этот родитель присутствует в нашем словаре
         else if (item.ParentId != null && dict.TryGetValue(item.ParentId.Value, out var parentNode))
         {
             parentNode.Children.Add(item);
         }
     }
 
-    // Возвращаем дерево, отфильтрованное от корня запрашиваемой ветки вниз
-    return Ok(rootNodes);
+    // 🟢 ВОЗВРАЩАЕМ ОБЪЕКТ С ДЕРЕВОМ И ПУТЕМ РАСКРЫТИЯ
+    var response = new SidebarResponseDto
+    {
+        Tree = rootNodes,
+        ExpandedIds = expandedIds
+    };
+
+    return Ok(response);
 }
 
 
