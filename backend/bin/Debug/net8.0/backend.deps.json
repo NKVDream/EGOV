@@ -12,6 +12,7 @@
           "Microsoft.AspNetCore.Authentication.JwtBearer": "8.0.27",
           "Microsoft.EntityFrameworkCore": "8.0.28",
           "Microsoft.EntityFrameworkCore.Design": "8.0.28",
+          "Microsoft.EntityFrameworkCore.Proxies": "8.0.28",
           "Microsoft.EntityFrameworkCore.Relational": "8.0.28",
           "Npgsql.EntityFrameworkCore.PostgreSQL": "8.0.11",
           "Swashbuckle.AspNetCore": "6.6.2"
@@ -25,6 +26,17 @@
           "lib/net6.0/BCrypt.Net-Next.dll": {
             "assemblyVersion": "4.0.3.0",
             "fileVersion": "4.0.3.0"
+          }
+        }
+      },
+      "Castle.Core/5.2.1": {
+        "dependencies": {
+          "System.Diagnostics.EventLog": "6.0.0"
+        },
+        "runtime": {
+          "lib/net6.0/Castle.Core.dll": {
+            "assemblyVersion": "5.0.0.0",
+            "fileVersion": "5.2.1.0"
           }
         }
       },
@@ -309,6 +321,18 @@
         },
         "runtime": {
           "lib/net8.0/Microsoft.EntityFrameworkCore.Design.dll": {
+            "assemblyVersion": "8.0.28.0",
+            "fileVersion": "8.0.2826.26502"
+          }
+        }
+      },
+      "Microsoft.EntityFrameworkCore.Proxies/8.0.28": {
+        "dependencies": {
+          "Castle.Core": "5.2.1",
+          "Microsoft.EntityFrameworkCore": "8.0.28"
+        },
+        "runtime": {
+          "lib/net8.0/Microsoft.EntityFrameworkCore.Proxies.dll": {
             "assemblyVersion": "8.0.28.0",
             "fileVersion": "8.0.2826.26502"
           }
@@ -636,6 +660,7 @@
           }
         }
       },
+      "System.Diagnostics.EventLog/6.0.0": {},
       "System.IdentityModel.Tokens.Jwt/7.1.2": {
         "dependencies": {
           "Microsoft.IdentityModel.JsonWebTokens": "7.1.2",
@@ -675,6 +700,13 @@
       "sha512": "sha512-W+U9WvmZQgi5cX6FS5GDtDoPzUCV4LkBLkywq/kRZhuDwcbavOzcDAr3LXJFqHUi952Yj3LEYoWW0jbEUQChsA==",
       "path": "bcrypt.net-next/4.0.3",
       "hashPath": "bcrypt.net-next.4.0.3.nupkg.sha512"
+    },
+    "Castle.Core/5.2.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-wHARzQA695jwwKreOzNsq54KiGqKP38tv8hi8e2FXDEC/sA6BtrX90tVPDkOfVu13PbEzr00TCV8coikl+D1Iw==",
+      "path": "castle.core/5.2.1",
+      "hashPath": "castle.core.5.2.1.nupkg.sha512"
     },
     "Humanizer.Core/2.14.1": {
       "type": "package",
@@ -759,6 +791,13 @@
       "sha512": "sha512-WKAI6l+sX59/VzirT2nyjzXLu+btRX9GEXokd9Fdx3ONU3Cvi2Mj1zwcx2esLwKXYyng6ExaVwhiab/0+bN4mg==",
       "path": "microsoft.entityframeworkcore.design/8.0.28",
       "hashPath": "microsoft.entityframeworkcore.design.8.0.28.nupkg.sha512"
+    },
+    "Microsoft.EntityFrameworkCore.Proxies/8.0.28": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-o1o8TL5KX7IjcGyZl0iwZkZo8FgP5lkfESJtTrz2EONTJIDCqrN8PQLoD5UEKWX/d82HXGV8OpmIkBFW36w3rw==",
+      "path": "microsoft.entityframeworkcore.proxies/8.0.28",
+      "hashPath": "microsoft.entityframeworkcore.proxies.8.0.28.nupkg.sha512"
     },
     "Microsoft.EntityFrameworkCore.Relational/8.0.28": {
       "type": "package",
@@ -997,6 +1036,13 @@
       "sha512": "sha512-iUR1eHrL8Cwd82neQCJ00MpwNIBs4NZgXzrPqx8NJf/k4+mwBO0XCRmHYJT4OLSwDDqh5nBLJWkz5cROnrGhRA==",
       "path": "system.composition.typedparts/6.0.0",
       "hashPath": "system.composition.typedparts.6.0.0.nupkg.sha512"
+    },
+    "System.Diagnostics.EventLog/6.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-lcyUiXTsETK2ALsZrX+nWuHSIQeazhqPphLfaRxzdGaG93+0kELqpgEHtwWOlQe7+jSFnKwaCAgL4kjeZCQJnw==",
+      "path": "system.diagnostics.eventlog/6.0.0",
+      "hashPath": "system.diagnostics.eventlog.6.0.0.nupkg.sha512"
     },
     "System.IdentityModel.Tokens.Jwt/7.1.2": {
       "type": "package",

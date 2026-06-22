@@ -175,3 +175,5 @@
 /home/bbblakey/Egov/EGOV/backend/obj/Debug/net8.0/backend.pdb
 /home/bbblakey/Egov/EGOV/backend/obj/Debug/net8.0/backend.genruntimeconfig.cache
 /home/bbblakey/Egov/EGOV/backend/obj/Debug/net8.0/ref/backend.dll
+/home/bbblakey/Egov/EGOV/backend/bin/Debug/net8.0/Castle.Core.dll
+/home/bbblakey/Egov/EGOV/backend/bin/Debug/net8.0/Microsoft.EntityFrameworkCore.Proxies.dll

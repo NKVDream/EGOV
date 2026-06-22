@@ -1,10 +1,11 @@
 {
   "version": 2,
-  "dgSpecHash": "Aw/HSMo9+RNCqzQm/NYb/B6TqjAXMfQFUWJkdC+TrJUtf2npR9Yij6f1bYjDDRapiLOyZvtFxVEKc+5D6irYdQ==",
+  "dgSpecHash": "d89lEGM2qApzoiOHUNaOZU5PFymtiYEgCHQnA0YQWb0Fh9R+hTZhP/awMfHRK8Flus3lUNvbcqSkMvi8/2B4RQ==",
   "success": true,
   "projectFilePath": "/home/bbblakey/Egov/EGOV/backend/backend.csproj",
   "expectedPackageFiles": [
     "/home/bbblakey/.nuget/packages/bcrypt.net-next/4.0.3/bcrypt.net-next.4.0.3.nupkg.sha512",
+    "/home/bbblakey/.nuget/packages/castle.core/5.2.1/castle.core.5.2.1.nupkg.sha512",
     "/home/bbblakey/.nuget/packages/humanizer.core/2.14.1/humanizer.core.2.14.1.nupkg.sha512",
     "/home/bbblakey/.nuget/packages/microsoft.aspnetcore.authentication.jwtbearer/8.0.27/microsoft.aspnetcore.authentication.jwtbearer.8.0.27.nupkg.sha512",
     "/home/bbblakey/.nuget/packages/microsoft.bcl.asyncinterfaces/6.0.0/microsoft.bcl.asyncinterfaces.6.0.0.nupkg.sha512",
@@ -17,6 +18,7 @@
     "/home/bbblakey/.nuget/packages/microsoft.entityframeworkcore.abstractions/8.0.28/microsoft.entityframeworkcore.abstractions.8.0.28.nupkg.sha512",
     "/home/bbblakey/.nuget/packages/microsoft.entityframeworkcore.analyzers/8.0.28/microsoft.entityframeworkcore.analyzers.8.0.28.nupkg.sha512",
     "/home/bbblakey/.nuget/packages/microsoft.entityframeworkcore.design/8.0.28/microsoft.entityframeworkcore.design.8.0.28.nupkg.sha512",
+    "/home/bbblakey/.nuget/packages/microsoft.entityframeworkcore.proxies/8.0.28/microsoft.entityframeworkcore.proxies.8.0.28.nupkg.sha512",
     "/home/bbblakey/.nuget/packages/microsoft.entityframeworkcore.relational/8.0.28/microsoft.entityframeworkcore.relational.8.0.28.nupkg.sha512",
     "/home/bbblakey/.nuget/packages/microsoft.extensions.apidescription.server/6.0.5/microsoft.extensions.apidescription.server.6.0.5.nupkg.sha512",
     "/home/bbblakey/.nuget/packages/microsoft.extensions.caching.abstractions/8.0.0/microsoft.extensions.caching.abstractions.8.0.0.nupkg.sha512",
@@ -51,6 +53,7 @@
     "/home/bbblakey/.nuget/packages/system.composition.hosting/6.0.0/system.composition.hosting.6.0.0.nupkg.sha512",
     "/home/bbblakey/.nuget/packages/system.composition.runtime/6.0.0/system.composition.runtime.6.0.0.nupkg.sha512",
     "/home/bbblakey/.nuget/packages/system.composition.typedparts/6.0.0/system.composition.typedparts.6.0.0.nupkg.sha512",
+    "/home/bbblakey/.nuget/packages/system.diagnostics.eventlog/6.0.0/system.diagnostics.eventlog.6.0.0.nupkg.sha512",
     "/home/bbblakey/.nuget/packages/system.identitymodel.tokens.jwt/7.1.2/system.identitymodel.tokens.jwt.7.1.2.nupkg.sha512",
     "/home/bbblakey/.nuget/packages/system.io.pipelines/6.0.3/system.io.pipelines.6.0.3.nupkg.sha512",
     "/home/bbblakey/.nuget/packages/system.reflection.metadata/6.0.1/system.reflection.metadata.6.0.1.nupkg.sha512",

@@ -42,7 +42,7 @@ export function SidebarTree({ treeData, activeId, onNodeSelect, expandedItems })
         });
     };
 
-    // 🟢 ИСПРАВЛЕНО: Material UI сам передает ID выбранного элемента при клике на текст
+    //ИСПРАВЛЕНО: Material UI сам передает ID выбранного элемента при клике на текст
     const handleSelectedItemsChange = (event, itemId) => {
         if (itemId && onNodeSelect) {
             onNodeSelect(parseInt(itemId, 10));

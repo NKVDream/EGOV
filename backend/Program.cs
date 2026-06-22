@@ -24,6 +24,7 @@ builder.Services.AddCors(options =>//настройка CORS для связи �
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");//подключение к БД
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    
     options.UseNpgsql(connectionString));
 
 builder.Services.AddScoped<JwtService>(); // Серивис регистрации токенов
