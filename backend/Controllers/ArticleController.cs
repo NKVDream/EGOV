@@ -43,29 +43,39 @@ public class ArticleController : ControllerBase
 
 
 
-    [HttpGet]
-    public async Task<ActionResult<IEnumerable<ArticleReadDto>>> GetArticles()
+[HttpGet]
+public async Task<ActionResult<IEnumerable<ArticleReadDto>>> GetArticles()
+{
+    // Загружаем корневые статьи вместе с их авторами, категориями и ПЕРВЫМ уровнем подстатей
+    var articles = await _context.Articles
+        .Where(a => a.ParentId == null) // Только корневые темы
+        .Include(a => a.Author)
+        .Include(a => a.Categories)
+        .Include(a => a.Children) // 🟢 КРИТИЧНО: Подгружаем дочерние статьи для карточек
+        .ToListAsync();
+
+    // Маппим данные в DTO
+    var articleDtos = articles.Select(a => new ArticleReadDto
     {
-        var articles = await _context.Articles
-            .Where(a => a.ParentId == null)
-            .Include(a => a.Author)
-            .Include(a => a.Categories)
-            .ToListAsync();
-
-        var articleDtos = articles.Select(a => new ArticleReadDto
+        Id = a.Id,
+        Title = a.Title,
+        Content = a.Content,
+        CreatedAt = a.CreatedAt,
+        UpdatedAt = a.UpdatedAt,
+        AuthorId = a.AuthorId,
+        AuthorName = a.Author?.Name ?? "Неизвестный автор",
+        Categories = a.Categories.Select(c => c.Name).ToList(),
+        Children = a.Children.Select(child => new ArticleMenuDto
         {
-            Id = a.Id,
-            Title = a.Title,
-            Content = a.Content,
-            CreatedAt = a.CreatedAt,
-            UpdatedAt = a.UpdatedAt,
-            AuthorId = a.AuthorId,
-            AuthorName = a.Author?.Name ?? "Неизвестный автор",
-            Categories = a.Categories.Select(c => c.Name).ToList()
-        });
+            Id = child.Id,
+            Title = child.Title,
+            ParentId = child.ParentId
+        }).ToList()
+    });
 
-        return Ok(articleDtos);
-    }
+    return Ok(articleDtos);
+}
+
 
     [HttpGet("{id}")]
     public async Task<ActionResult<ArticleReadDto>> GetArticle(int id)

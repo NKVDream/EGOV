@@ -110,11 +110,10 @@ export default function Home() {
                 >
                   <CardBlog 
                     article={article} 
-
                     onClick={() => navigate(`/article/${articleId}`)} 
+                    onNodeSelect={(subArticleId) => navigate(`/article/${subArticleId}`)}
                     
                     onEdit={() => navigate(`/article/edit/${articleId}`)}
-                    
                     onDelete={() => handleDeleteFromFeed(articleId)}
                   />
                 </Box>

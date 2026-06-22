@@ -25,9 +25,8 @@ export default function ReadArticle() {
   const navigate = useNavigate();
   const isAdmin = localStorage.getItem('role') === 'admin';
 
-  // 🟢 ВСЕ СТ ChouСЕ СТЕЙТЫ ДОЛЖНЫ БЫТЬ ОБЪЯВЛЕНЫ СТРОГО ПО ОДНОМУ РАЗУ:
   const [sidebarTree, setSidebarTree] = useState([]); 
-  const [expandedItems, setExpandedItems] = useState([]); // Наш новый стейт для путей папок
+  const [expandedItems, setExpandedItems] = useState([]);
   const [activeArticleId, setActiveArticleId] = useState(parseInt(id, 10));
 
   const [article, setArticle] = useState(null);
@@ -50,7 +49,6 @@ export default function ReadArticle() {
         return res.json();
       })
       .then((data) => {
-        // 🟢 ТАК КАК В КОНСОЛИ ЧИСТЫЙ МАССИВ: записываем data напрямую!
         const nodes = Array.isArray(data) ? data : [];
         setSidebarTree(nodes);
 
@@ -88,10 +86,10 @@ export default function ReadArticle() {
 }, [id]);
 
 
-  // 3. Функция загрузки самой статьи
+  //Функция загрузки самой статьи
   const fetchArticle = async () => {
     setLoading(true);
-    setError(''); // Сбрасываем старую ошибку при переключении статей
+    setError('');
     try {
       const response = await fetch(`http://localhost:5170/api/Article/${activeArticleId}`);
       if (response.ok) {
@@ -114,8 +112,7 @@ export default function ReadArticle() {
     fetchArticle();
   }, [activeArticleId]);
 
-  // 4. ДОБАВЛЕНО: Обработчик клика по элементу в SidebarTree
-  // Вместо ручного выставления стейта мы меняем URL, запуская красивую цепочку обновлений реакта
+  // Обработчик клика по элементу в SidebarTree
   const handleNodeSelect = (selectedId) => {
     if (selectedId && selectedId !== activeArticleId) {
       navigate(`/article/${selectedId}`); // Предполагается, что ваш роут выглядит как /article/:id
@@ -128,7 +125,6 @@ export default function ReadArticle() {
     setLoadingHistory(true);
     const token = localStorage.getItem('token');
     try {
-      // Подставьте ваш точный адрес эндпоинта истории
       const response = await fetch(`http://localhost:5170/api/Article/${activeArticleId}/history`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -157,7 +153,6 @@ const handleRollback = async (versionId) => {
 
   const token = localStorage.getItem('token');
   try {
-    // URL эндпоинта зависит от вашего бэкенда (например, /api/Article/rollback/{versionId})
     const response = await fetch(`http://localhost:5170/api/Article/rollback/${versionId}`, {
       method: 'POST',
       headers: {
@@ -170,7 +165,6 @@ const handleRollback = async (versionId) => {
       alert('Статья успешно восстановлена к выбранной версии!');
       setHistoryDialogOpen(false);
       
-      // Принудительно перезапрашиваем статью с бэкенда, чтобы обновить текст на экране
       setLoading(true);
       const updatedResp = await fetch(`http://localhost:5170/api/Article/${id}`);
       if (updatedResp.ok) {
@@ -274,7 +268,7 @@ const handleRollback = async (versionId) => {
     
     {/* Само дерево статей */}
     <Box sx={{ flexGrow: 1, overflowY: 'auto' }}>
-      {/* 🟢 ДОБАВЛЕНА ПРОВЕРКА: Если данные пришли, рендерим компонент дерева */}
+      {/*Если данные пришли, рендерим компонент дерева */}
       {sidebarTree && sidebarTree.length > 0 ? (
         <SidebarTree 
           treeData={sidebarTree} 
@@ -291,7 +285,6 @@ const handleRollback = async (versionId) => {
     </Box>
   </Box>
 
-      {/* 🟢 КНОПКА «ОТКРЫТЬ САЙДБАР» (Теперь она фиксированная и парит слева, не сдвигая верстку статьи) */}
       {!isSidebarOpen && (
         <Box sx={{ position: 'fixed', top: 85, left: 24, zIndex: 10 }}>
           <Tooltip title="Открыть содержание" placement="right">
@@ -310,7 +303,7 @@ const handleRollback = async (versionId) => {
         </Box>
       )}
 
-      {/* ПРАВАЯ КОЛОНКА: Контент статьи (Исправлено: убраны динамические padding-отступы) */}
+      {/* ПРАВАЯ КОЛОНКА: Контент статьи*/}
       <Box sx={{ 
         flexGrow: 1, 
         boxSizing: 'border-box', 
@@ -325,7 +318,7 @@ const handleRollback = async (versionId) => {
             Назад
           </Button>
 
-          {/* БЛОК КНОПОК ДЛЯ АДМИНИСТРАТОРА (Теперь они жестко привязаны к контейнеру статьи) */}
+          {/* БЛОК КНОПОК ДЛЯ АДМИНИСТРАТОРА*/}
           {isAdmin && (
             <Box sx={{ position: 'absolute', top: 0, right: 0, display: 'flex', gap: 1, zIndex: 2 }}>
               <Tooltip title="Создать подстатью">
