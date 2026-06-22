@@ -46,35 +46,77 @@ public class ArticleController : ControllerBase
 [HttpGet]
 public async Task<ActionResult<IEnumerable<ArticleReadDto>>> GetArticles()
 {
-    // Загружаем корневые статьи вместе с их авторами, категориями и ПЕРВЫМ уровнем подстатей
-    var articles = await _context.Articles
-        .Where(a => a.ParentId == null) // Только корневые темы
-        .Include(a => a.Author)
-        .Include(a => a.Categories)
-        .Include(a => a.Children) // 🟢 КРИТИЧНО: Подгружаем дочерние статьи для карточек
+    // Стягиваем ВСЕ статьи из базы одним рекурсивным SQL-запросом.
+    // Запрос вытаскивает id, title и parent_id для построения бесконечного дерева.
+    var allMenuNodes = await _context.Articles
+        .AsNoTracking()
+        .Select(a => new ArticleMenuDto
+        {
+            Id = a.Id,
+            Title = a.Title,
+            ParentId = a.ParentId,
+            Children = new List<ArticleMenuDto>()
+        })
         .ToListAsync();
 
-    // Маппим данные в DTO
-    var articleDtos = articles.Select(a => new ArticleReadDto
+    var dict = allMenuNodes.ToDictionary(n => n.Id);
+    
+    // Сюда будем складывать дочерние деревья, сгруппированные по ParentId
+    var childrenGroupedByParent = allMenuNodes
+        .Where(n => n.ParentId != null)
+        .GroupBy(n => n.ParentId!.Value)
+        .ToDictionary(g => g.Key, g => g.ToList());
+
+    // Рекурсивная функция, которая привязывает детей к их родителям на любую глубину
+    void BuildMenuTree(ArticleMenuDto parent)
     {
-        Id = a.Id,
-        Title = a.Title,
-        Content = a.Content,
-        CreatedAt = a.CreatedAt,
-        UpdatedAt = a.UpdatedAt,
-        AuthorId = a.AuthorId,
-        AuthorName = a.Author?.Name ?? "Неизвестный автор",
-        Categories = a.Categories.Select(c => c.Name).ToList(),
-        Children = a.Children.Select(child => new ArticleMenuDto
+        if (childrenGroupedByParent.TryGetValue(parent.Id, out var children))
         {
-            Id = child.Id,
-            Title = child.Title,
-            ParentId = child.ParentId
-        }).ToList()
-    });
+            parent.Children = children;
+            foreach (var child in children)
+            {
+                BuildMenuTree(child); // Спускаемся бесконечно вглубь дерева
+            }
+        }
+    }
+
+    //Загружаем корневые статьи со всеми их реальными данными (Авторы, Категории, Контент)
+    var rootArticles = await _context.Articles
+        .Where(a => a.ParentId == null)
+        .Include(a => a.Author)
+        .Include(a => a.Categories)
+        .ToListAsync();
+
+    //Маппим корневые статьи в итоговый DTO и привязываем к ним собранные бесконечные деревья
+    var articleDtos = rootArticles.Select(a => {
+        // Ищем корневой узел в нашей плоской структуре меню
+        List<ArticleMenuDto> rootChildren = new();
+        if (childrenGroupedByParent.TryGetValue(a.Id, out var children))
+        {
+            rootChildren = children;
+            foreach (var child in rootChildren)
+            {
+                BuildMenuTree(child); // Раскрываем дерево детей до самого конца
+            }
+        }
+
+        return new ArticleReadDto
+        {
+            Id = a.Id,
+            Title = a.Title,
+            Content = a.Content,
+            CreatedAt = a.CreatedAt,
+            UpdatedAt = a.UpdatedAt,
+            AuthorId = a.AuthorId,
+            AuthorName = a.Author?.Name ?? "Неизвестный автор",
+            Categories = a.Categories.Select(c => c.Name).ToList(),
+            Children = rootChildren // Отдаем фронтенду полностью собранное бесконечное дерево
+        };
+    }).ToList();
 
     return Ok(articleDtos);
 }
+
 
 
     [HttpGet("{id}")]

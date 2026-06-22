@@ -91,10 +91,10 @@ export default function Home() {
             sx={{ 
               display: 'grid',
               gridTemplateColumns: {
-                xs: '1fr', // 1 колонка на смартфонах
-                sm: 'repeat(auto-fill, minmax(320px, 1fr))' // Динамические колонки на ПК
+                xs: '1fr', 
+                sm: 'repeat(auto-fill, minmax(320px, 1fr))' 
               },
-              gap: 4, // Фиксированное расстояние между карточками                       
+              gap: 4,                        
               width: '100%', 
               margin: 0,                           
               padding: 0
@@ -103,24 +103,10 @@ export default function Home() {
             {articles.map((article) => {
               const articleId = article.id || article.Id;
 
-              // Проверяем, есть ли у карточки дочерние подстатьи
-              const hasChildren = (article?.children && article.children.length > 0) || 
-                                  (article?.Children && article.Children.length > 0);
-
               return (
                 <Box 
                   key={articleId} 
-                  sx={{ 
-                    width: '100%',
-                    gridColumn: {
-                      xs: 'auto',
-                      sm: hasChildren ? 'span 1' : 'auto'
-                    },
-                    // Позволяем стилям из CardBlog.jsx управлять gridColumn контейнера
-                    '&:has(.MuiCollapse-entered)': {
-                      gridColumn: '1 / -1 !important'
-                    }
-                  }}               
+                  sx={{ width: '100%', gridColumn: 'auto' }}               
                 >
                   <CardBlog 
                     article={article} 
