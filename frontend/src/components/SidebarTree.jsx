@@ -1,20 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { SimpleTreeView } from '@mui/x-tree-view/SimpleTreeView';
 import { TreeItem } from '@mui/x-tree-view/TreeItem';
 import { Box, Typography } from '@mui/material';
 
 export function SidebarTree({ treeData, activeId, onNodeSelect, expandedItems }) {
-    // Внутреннее состояние для управления раскрытыми узлами
-    const [expanded, setExpanded] = useState([]);
-
-    // 🟢 ИСПРАВЛЕНО: Раскрываем папки только при смене статьи (activeId). 
-    // Это предотвратит автоматическое схлопывание при ручных кликах.
-    useEffect(() => {
-        if (Array.isArray(expandedItems) && expandedItems.length > 0) {
-            setExpanded(expandedItems);
-        }
-    }, [activeId]); // Сюда передаем ТОЛЬКО activeId, убираем expandedItems из зависимостей
-
+    
+    // Рекурсивный рендер элементов дерева
     const renderTreeNodes = (nodes) => {
         if (!Array.isArray(nodes)) return null;
         
@@ -30,6 +21,7 @@ export function SidebarTree({ treeData, activeId, onNodeSelect, expandedItems })
                     key={currentId}
                     itemId={currentId.toString()}
                     label={currentTitle}
+                    // Убрали onClick отсюда, чтобы не было конфликта событий с Material UI
                     sx={{
                         borderBottom: '1px solid rgba(0, 0, 0, 0.05)',
                         '& .MuiTreeItem-content': {
@@ -50,14 +42,11 @@ export function SidebarTree({ treeData, activeId, onNodeSelect, expandedItems })
         });
     };
 
+    // 🟢 ИСПРАВЛЕНО: Material UI сам передает ID выбранного элемента при клике на текст
     const handleSelectedItemsChange = (event, itemId) => {
         if (itemId && onNodeSelect) {
             onNodeSelect(parseInt(itemId, 10));
         }
-    };
-
-    const handleExpandedItemsChange = (event, itemIds) => {
-        setExpanded(itemIds);
     };
 
     return (
@@ -71,9 +60,8 @@ export function SidebarTree({ treeData, activeId, onNodeSelect, expandedItems })
             
             <SimpleTreeView
                 selectedItems={activeId ? activeId.toString() : null}
-                onSelectedItemsChange={handleSelectedItemsChange}
-                expandedItems={expanded}
-                onExpandedItemsChange={handleExpandedItemsChange}
+                onSelectedItemsChange={handleSelectedItemsChange} // Ловим событие клика по статье здесь
+                defaultExpandedItems={Array.isArray(expandedItems) ? expandedItems : []}
             >
                 {renderTreeNodes(treeData)}
             </SimpleTreeView>

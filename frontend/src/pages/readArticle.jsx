@@ -29,6 +29,12 @@ export default function ReadArticle() {
   const [expandedItems, setExpandedItems] = useState([]);
   const [activeArticleId, setActiveArticleId] = useState(parseInt(id, 10));
 
+    useEffect(() => {
+    if (id) {
+      setActiveArticleId(parseInt(id, 10));
+    }
+  }, [id]);
+
   const [article, setArticle] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -41,49 +47,32 @@ export default function ReadArticle() {
   // Стейт для закрытия/открытия сайдбара
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
-  useEffect(() => {
+useEffect(() => {
   if (id) {
     fetch(`http://localhost:5170/api/Article/${id}/sidebar`)
       .then((res) => {
-        if (!res.ok) throw new Error("Ошибка загрузки");
+        if (!res.ok) throw new Error("Ошибка сервера при загрузке меню");
         return res.json();
       })
       .then((data) => {
-        const nodes = Array.isArray(data) ? data : [];
-        setSidebarTree(nodes);
-
-        // Автоматически вычисляем цепочку раскрытия прямо на фронтенде,
-        // чтобы вообще не трогать и не ломать бэкенд!
-        const expanded = [];
-        const findActivePath = (items) => {
-          for (const item of items) {
-            const currentId = item.id !== undefined ? item.id : item.Id;
-            const currentChildren = item.children || item.Children;
-            
-            // Если нашли текущую статью, возвращаем true
-            if (currentId === parseInt(id, 10)) return true;
-
-            // Ищем вглубь по подстатьям
-            if (currentChildren && currentChildren.length > 0) {
-              const found = findActivePath(currentChildren);
-              if (found) {
-                expanded.push(currentId.toString());
-                return true;
-              }
-            }
-          }
-          return false;
-        };
-
-        findActivePath(nodes);
+        console.log("Данные сайдбара из БД:", data);
+        
+        const nodes = data.tree || data.Tree || [];
+        const expanded = data.expandedIds || data.ExpandedIds || [];
+        
+        const nodesArray = Array.isArray(nodes) ? nodes : [nodes];
+        
+        setSidebarTree(nodesArray);
         setExpandedItems(expanded);
       })
       .catch((err) => {
         console.error("Ошибка в fetch сайдбара:", err);
-        setSidebarTree([]);
+        setSidebarTree([]); // В случае ошибки оставляем меню пустым, чтобы не крашить страницу
       });
   }
 }, [id]);
+
+
 
 
   //Функция загрузки самой статьи
