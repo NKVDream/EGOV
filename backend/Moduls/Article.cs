@@ -37,4 +37,6 @@ public class Article
 
     public virtual ICollection<VirtualMachine> VirtualMachines { get; set; } = new List<VirtualMachine>();
 
+    
+
 }

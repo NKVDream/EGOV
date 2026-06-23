@@ -244,13 +244,8 @@ export default function Layout({ children }) {
               </ListItemButton>
             </ListItem>
             <ListItem disablePadding>
-              <ListItemButton onClick={() => navigate('/profile')}>
-                <ListItemText primary="Личный кабинет" />
-              </ListItemButton>
-            </ListItem>
-            <ListItem disablePadding>
-              <ListItemButton onClick={() => navigate('/settings')}>
-                <ListItemText primary="Настройки" />
+              <ListItemButton onClick={() => navigate('/vms')}>
+                <ListItemText primary="Виртуальные Машины" />
               </ListItemButton>
             </ListItem>
           </List>

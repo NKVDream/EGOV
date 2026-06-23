@@ -16,16 +16,23 @@ public class ApplicationDbContext : DbContext
     public DbSet<Permission> Permissions{get;set;}
     public DbSet<Role>Roles{get; set;}
     public DbSet<HistoryOfChanges>HistoryOfChanges{get; set;}
+    // Внутри класса ApplicationDbContext:
+    public DbSet<VirtualMachine> VirtualMachines { get; set; }
+
 
 protected override void OnModelCreating(ModelBuilder modelBuilder)
 {
     base.OnModelCreating(modelBuilder);
 
-    modelBuilder.Entity<VirtualMachine>()
-    .HasOne(vm => vm.Article)
-    .WithMany(a => a.VirtualMachines)
-    .HasForeignKey(vm => vm.ArticleId)
-    .OnDelete(DeleteBehavior.SetNull); // Если статья удалится, VM не удалятся, а просто отвяжутся
+    modelBuilder.Entity<Article>()
+        .HasMany(a => a.VirtualMachines)
+        .WithMany(vm => vm.Articles)
+        .UsingEntity<Dictionary<string, object>>(
+            "ArticleVirtualMachineJoin",
+            j => j.HasOne<VirtualMachine>().WithMany().HasForeignKey("vm_id").OnDelete(DeleteBehavior.Cascade),
+            j => j.HasOne<Article>().WithMany().HasForeignKey("article_id").OnDelete(DeleteBehavior.Cascade),
+            j => j.ToTable("article_virtual_machine")
+        );
 
 
     modelBuilder.Entity<Article>()

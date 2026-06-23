@@ -4,12 +4,13 @@ import Home from './pages/home';
 import Registration from './pages/registration';
 import CreateArticle from './pages/createArticle';
 import ReadArticle from './pages/readArticle';
+import VirtualMachinesList from './pages/VirtualMachinesList';
+import CreateVirtualMachine from './pages/CreateVirtualMachine'; 
 
-//не пустит без токена
+// Не пустит без токена
 function ProtectedRoute({ children }) {
   const token = localStorage.getItem('token');
   
-  // Если токена нет в браузере, принудительно отправляем на авторизацию
   if (!token) {
     return <Navigate to="/login" replace />;
   }
@@ -21,20 +22,47 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Публичный маршрут: страница входа */}
+        {/* Публичные маршруты */}
         <Route path="/login" element={<Login />} />
         <Route path="/registration" element={<Registration/>}/>
         <Route path="/article/create" element={<CreateArticle />} />
         <Route path="/article/edit/:id" element={<CreateArticle />} />
         <Route path="/article/:id" element={<ReadArticle />} />
 
-        
         {/* Защищенный маршрут: главная страница со статьями */}
         <Route 
           path="/home" 
           element={
             <ProtectedRoute>
               <Home />
+            </ProtectedRoute>
+          } 
+        />
+
+        {/* Защищеный маршрут: страница с виртуальными машинами и страница создания вм*/}
+        <Route 
+          path="/vms" 
+          element={
+            <ProtectedRoute>
+              <VirtualMachinesList />
+            </ProtectedRoute>
+          } 
+        />
+
+        <Route 
+          path="/vms/create" 
+          element={
+            <ProtectedRoute>
+              <CreateVirtualMachine />
+            </ProtectedRoute>
+          } 
+        />
+
+        <Route 
+          path="/vms/edit/:id" 
+          element={
+            <ProtectedRoute>
+              <CreateVirtualMachine />
             </ProtectedRoute>
           } 
         />

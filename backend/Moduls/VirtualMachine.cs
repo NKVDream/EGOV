@@ -24,12 +24,11 @@ public class VirtualMachine
     [Column("os")]
     public string? OS { get; set; }
 
+    [Required]
+    [MaxLength(50)]
     [Column("status")]
     public string Status { get; set; } = "Active";
 
-    // Внешний ключ на статью-подсистему (может быть null если VM общая)
-    [Column("article_id")]
-    public int? ArticleId { get; set; }
-    
-    public virtual Article? Article { get; set; }
+    // 🟢 ИСПРАВЛЕНО: Коллекция статей для бесконечной связи «многие-ко-многим»
+    public virtual ICollection<Article> Articles { get; set; } = new List<Article>();
 }

@@ -18,55 +18,114 @@ public class VirtualMachineController : ControllerBase
         _context = context;
     }
 
-    //Получить ВСЕ виртуальные машины
+    // 1. Получить ВСЕ машины (с массивом связанных статей)
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<VirtualMachineDto>>> GetVirtualMachines()
+    public async Task<ActionResult<IEnumerable<object>>> GetVirtualMachines()
     {
-        var vms = await _context.Set<VirtualMachine>()
-            .Include(vm => vm.Article)
-            .Select(vm => new VirtualMachineDto
+        var vms = await _context.VirtualMachines
+            .Include(vm => vm.Articles)
+            .Select(vm => new
             {
                 Id = vm.Id,
                 Name = vm.Name,
                 IpAddress = vm.IpAddress,
                 OS = vm.OS,
                 Status = vm.Status,
-                ArticleId = vm.ArticleId,
-                ArticleTitle = vm.Article != null ? vm.Article.Title : null
+                Articles = vm.Articles.Select(a => new { Id = a.Id, Title = a.Title }).ToList()
             })
             .ToListAsync();
 
         return Ok(vms);
     }
 
-    //Создать новую виртуальную машину
+    // 2. 🟢 НОВЫЙ МЕТОД: Получить ОДНУ машину по ID (для автозаполнения формы редактирования)
+    [HttpGet("{id}")]
+    public async Task<ActionResult<object>> GetVirtualMachine(int id)
+    {
+        var vm = await _context.VirtualMachines
+            .Include(vm => vm.Articles)
+            .FirstOrDefaultAsync(v => v.Id == id);
+
+        if (vm == null) return NotFound(new { message = "Машина не найдена" });
+
+        return Ok(new
+        {
+            Id = vm.Id,
+            Name = vm.Name,
+            IpAddress = vm.IpAddress,
+            OS = vm.OS,
+            Status = vm.Status,
+            // Отдаем только массив ID привязанных статей, чтобы фронтенд сразу зажег галочки
+            ArticleIds = vm.Articles.Select(a => a.Id).ToList() 
+        });
+    }
+
+    // 3. Создать новую машину со множественной привязкой
     [HttpPost]
     [Authorize(Roles = "admin")]
-    public async Task<IActionResult> CreateVM(VirtualMachineDto dto)
+    public async Task<IActionResult> CreateVM([FromBody] VirtualMachineCreateDto dto)
     {
         var vm = new VirtualMachine
         {
             Name = dto.Name,
             IpAddress = dto.IpAddress,
             OS = dto.OS,
-            Status = dto.Status,
-            ArticleId = dto.ArticleId // Сразу привязываем к статье, если ID передан
+            Status = dto.Status
         };
 
-        _context.Set<VirtualMachine>().Add(vm);
+        if (dto.ArticleIds != null && dto.ArticleIds.Any())
+        {
+            var selectedArticles = await _context.Articles
+                .Where(a => dto.ArticleIds.Contains(a.Id))
+                .ToListAsync();
+            vm.Articles = selectedArticles;
+        }
+
+        _context.VirtualMachines.Add(vm);
         await _context.SaveChangesAsync();
         return Ok(vm);
     }
 
-    //Быстро привязать/отвязать VM от статьи (вызывается при редактировании статьи)
-    [HttpPut("{id}/bind")]
+    // 4. 🟢 НОВЫЙ МЕТОД: Редактировать (Обновить) параметры VM
+    [HttpPut("{id}")]
     [Authorize(Roles = "admin")]
-    public async Task<IActionResult> BindToArticle(int id, [FromQuery] int? articleId)
+    public async Task<IActionResult> UpdateVM(int id, [FromBody] VirtualMachineCreateDto dto)
     {
-        var vm = await _context.Set<VirtualMachine>().FindAsync(id);
+        var vm = await _context.VirtualMachines
+            .Include(vm => vm.Articles)
+            .FirstOrDefaultAsync(v => v.Id == id);
+
         if (vm == null) return NotFound(new { message = "Машина не найдена" });
 
-        vm.ArticleId = articleId;
+        // Обновляем текстовые поля
+        vm.Name = dto.Name;
+        vm.IpAddress = dto.IpAddress;
+        vm.OS = dto.OS;
+        vm.Status = dto.Status;
+
+        // Обновляем связи в промежуточной таблице
+        vm.Articles.Clear(); // Стираем старые привязки
+        if (dto.ArticleIds != null && dto.ArticleIds.Any())
+        {
+            var selectedArticles = await _context.Articles
+                .Where(a => dto.ArticleIds.Contains(a.Id))
+                .ToListAsync();
+            vm.Articles = selectedArticles;
+        }
+
+        await _context.SaveChangesAsync();
+        return NoContent();
+    }
+
+    // 5. Удалить машину
+    [HttpDelete("{id}")]
+    [Authorize(Roles = "admin")]
+    public async Task<IActionResult> DeleteVM(int id)
+    {
+        var vm = await _context.VirtualMachines.FindAsync(id);
+        if (vm == null) return NotFound();
+
+        _context.VirtualMachines.Remove(vm);
         await _context.SaveChangesAsync();
         return NoContent();
     }
