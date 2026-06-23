@@ -217,38 +217,7 @@ export default function CreateVirtualMachine() {
               </Select>
             </FormControl>
 
-            {/* 🟢 МНОЖЕСТВЕННЫЙ ВЫБОР СВЯЗАННЫХ ПОДСИСТЕМ (Многие-ко-многим) */}
-            <FormControl fullWidth sx={{ backgroundColor: '#ffffff', borderRadius: 1 }}>
-              <InputLabel id="articles-label">Связанные подсистемы (статьи EgovWiki)</InputLabel>
-              <Select
-                labelId="articles-label"
-                multiple
-                value={selectedArticleIds}
-                onChange={(e) => setSelectedArticleIds(e.target.value)}
-                input={<OutlinedInput label="Связанные подсистемы (статьи EgovWiki)" />}
-                // Рендерим выбранные подсистемы в виде красивых чипов-тегов
-                renderValue={(selected) => (
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                    {selected.map((value) => {
-                      const art = articlesList.find(a => (a.id || a.Id) === value);
-                      return <Chip key={value} label={art ? (art.title || art.Title) : `ID: ${value}`} size="small" />;
-                    })}
-                  </Box>
-                )}
-              >
-                {/* Выводим элементы списка с чекбоксами */}
-                {articlesList.map((art) => {
-                  const artId = art.id || art.Id;
-                  const artTitle = art.title || art.Title;
-                  return (
-                    <MenuItem key={artId} value={artId}>
-                      <Checkbox checked={selectedArticleIds.indexOf(artId) > -1} />
-                      <ListItemText primary={`${artTitle} (ID: ${artId})`} />
-                    </MenuItem>
-                  );
-                })}
-              </Select>
-            </FormControl>
+            {/* МНОЖЕСТВЕННЫЙ ВЫБОР СВЯЗАННЫХ ПОДСИСТЕМ (Многие-ко-многим) */}
 
             {/* КНОПКИ УПРАВЛЕНИЯ ФОРМОЙ */}
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 1 }}>

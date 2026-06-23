@@ -2,42 +2,40 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
   Box, Typography, Button, CircularProgress, Alert, 
-  Chip, Divider, IconButton, Tooltip,
-  Dialog, DialogTitle, DialogContent, DialogActions, 
-  List, ListItem, ListItemText 
+  Chip, Divider, IconButton, Tooltip, Dialog, DialogTitle, 
+  DialogContent, DialogActions, List, ListItem, ListItemText 
 } from '@mui/material';
-import HistoryIcon from '@mui/icons-material/History';
-import MenuIcon from '@mui/icons-material/Menu';
-import MenuOpenIcon from '@mui/icons-material/MenuOpen';
+import HistoryIcon from '@mui/icons-material/History'; 
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import PersonIcon from '@mui/icons-material/Person';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import RestoreIcon from '@mui/icons-material/Restore';
-import Layout from '../components/Layout';
 import AddIcon from '@mui/icons-material/Add';
+import MenuIcon from '@mui/icons-material/Menu'; 
+import MenuOpenIcon from '@mui/icons-material/MenuOpen'; 
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf'; 
+import Layout from '../components/Layout';
 import { SidebarTree } from '../components/SidebarTree';
-
+import { jsPDF } from 'jspdf'; 
+import html2canvas from 'html2canvas'; 
 
 export default function ReadArticle() {
   const { id } = useParams();
   const navigate = useNavigate();
   const isAdmin = localStorage.getItem('role') === 'admin';
 
+  // Состояния для сайдбара
   const [sidebarTree, setSidebarTree] = useState([]); 
   const [expandedItems, setExpandedItems] = useState([]);
   const [activeArticleId, setActiveArticleId] = useState(parseInt(id, 10));
 
-    useEffect(() => {
-    if (id) {
-      setActiveArticleId(parseInt(id, 10));
-    }
-  }, [id]);
-
+  // Состояния для контента статьи и инфраструктуры
   const [article, setArticle] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [attachedVms, setAttachedVms] = useState([]);
 
   // Состояния для управления историей изменений
   const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
@@ -47,43 +45,59 @@ export default function ReadArticle() {
   // Стейт для закрытия/открытия сайдбара
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
-useEffect(() => {
-  if (id) {
-    fetch(`http://localhost:5170/api/Article/${id}/sidebar`)
-      .then((res) => {
-        if (!res.ok) throw new Error("Ошибка сервера при загрузке меню");
-        return res.json();
-      })
-      .then((data) => {
-        console.log("Данные сайдбара из БД:", data);
-        
-        const nodes = data.tree || data.Tree || [];
-        const expanded = data.expandedIds || data.ExpandedIds || [];
-        
-        const nodesArray = Array.isArray(nodes) ? nodes : [nodes];
-        
-        setSidebarTree(nodesArray);
-        setExpandedItems(expanded);
-      })
-      .catch((err) => {
-        console.error("Ошибка в fetch сайдбара:", err);
-        setSidebarTree([]); // В случае ошибки оставляем меню пустым, чтобы не крашить страницу
-      });
-  }
-}, [id]);
+  // 1. СИНХРОНИЗАЦИЯ: Принудительно обновляем внутренний стейт при смене ID в URL
+  useEffect(() => {
+    if (id) {
+      setActiveArticleId(parseInt(id, 10));
+    }
+  }, [id]);
 
+  // 2. ХУК: Загрузка структуры сайдбара при смене ID в URL
+  useEffect(() => {
+    if (id) {
+      fetch(`http://localhost:5170/api/Article/${id}/sidebar`)
+        .then((res) => {
+          if (!res.ok) throw new Error("Ошибка сервера при загрузке меню");
+          return res.json();
+        })
+        .then((data) => {
+          console.log("Данные сайдбара из БД:", data);
+          
+          const nodes = data.tree || data.Tree || [];
+          const expanded = data.expandedIds || data.ExpandedIds || [];
+          const nodesArray = Array.isArray(nodes) ? nodes : [nodes];
+          
+          setSidebarTree(nodesArray);
+          setExpandedItems(expanded);
+        })
+        .catch((err) => {
+          console.error("Ошибка в fetch сайдбара:", err);
+          setSidebarTree([]); 
+        });
+    }
+  }, [id]);
 
-
-
-  //Функция загрузки самой статьи
+  // 3. ФУНКЦИЯ: Загрузка содержимого статьи и связанных виртуальных машин
   const fetchArticle = async () => {
     setLoading(true);
     setError('');
     try {
-      const response = await fetch(`http://localhost:5170/api/Article/${activeArticleId}`);
+      const token = localStorage.getItem('token'); 
+
+      const response = await fetch(`http://localhost:5170/api/Article/${activeArticleId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
       if (response.ok) {
         const data = await response.json();
         setArticle(data);
+        
+        const vms = data.virtualMachines || data.VirtualMachines || [];
+        setAttachedVms(vms);
       } else if (response.status === 404) {
         setError('Статья не найдена.');
       } else {
@@ -101,15 +115,53 @@ useEffect(() => {
     fetchArticle();
   }, [activeArticleId]);
 
-  // Обработчик клика по элементу в SidebarTree
-  const handleNodeSelect = (selectedId) => {
-    if (selectedId && selectedId !== activeArticleId) {
-      navigate(`/article/${selectedId}`); // Предполагается, что ваш роут выглядит как /article/:id
+  // 4. ФУНКЦИЯ: Выгрузка статьи и инфраструктуры в PDF
+  const handleDownloadPDF = async () => {
+    const element = document.getElementById('article-pdf-content');
+    if (!element) return;
+
+    try {
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        logging: false
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgWidth = 210; 
+      const pageHeight = 295; 
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      const rawTitle = article?.title || article?.Title || 'article';
+      const fileName = `${rawTitle.replace(/[^a-zA-Z0-9а-яА-Я ]/g, '')}.pdf`;
+      pdf.save(fileName);
+    } catch (err) {
+      console.error("Ошибка при генерации PDF:", err);
+      alert("Не удалось сгенерировать PDF файл.");
     }
   };
 
+  // Обработчик клика по элементу в SidebarTree
+  const handleNodeSelect = (selectedId) => {
+    if (selectedId && selectedId !== activeArticleId) {
+      navigate(`/article/${selectedId}`); 
+    }
+  };
 
-  //Функция загрузки истории изменений с бэкенда
+  // Функция загрузки истории изменений с бэкенда
   const fetchHistory = async () => {
     setLoadingHistory(true);
     const token = localStorage.getItem('token');
@@ -128,48 +180,38 @@ useEffect(() => {
     }
   };
 
-  // Открытие диалогового окна истории
   const handleOpenHistory = () => {
     setHistoryDialogOpen(true);
     fetchHistory();
   };
 
-  //Функция отката к выбранной версии
-const handleRollback = async (versionId) => {
-  if (!window.confirm('Вы уверены, что хотите восстановить эту версию статьи? Текущий текст будет заменен.')) {
-    return;
-  }
-
-  const token = localStorage.getItem('token');
-  try {
-    const response = await fetch(`http://localhost:5170/api/Article/rollback/${versionId}`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
-    });
-
-    if (response.ok) {
-      alert('Статья успешно восстановлена к выбранной версии!');
-      setHistoryDialogOpen(false);
-      
-      setLoading(true);
-      const updatedResp = await fetch(`http://localhost:5170/api/Article/${id}`);
-      if (updatedResp.ok) {
-        const updatedData = await updatedResp.json();
-        setArticle(updatedData);
-      }
-    } else {
-      alert('Не удалось откатить изменения. Ошибка сервера.');
+  const handleRollback = async (versionId) => {
+    if (!window.confirm('Вы уверены, что хотите восстановить эту версию статьи? Текущий текст будет заменен.')) {
+      return;
     }
-  } catch (error) {
-    console.error('Ошибка при откате статьи:', error);
-    alert('Ошибка соединения с сервером.');
-  } finally {
-    setLoading(false);
-  }
-};
+
+    const token = localStorage.getItem('token');
+    try {
+      const response = await fetch(`http://localhost:5170/api/Article/rollback/${versionId}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        alert('Статья успешно восстановлена к выбранной версии!');
+        setHistoryDialogOpen(false);
+        fetchArticle(); 
+      } else {
+        alert('Не удалось откатить изменения. Ошибка сервера.');
+      }
+    } catch (error) {
+      console.error('Ошибка при откате статьи:', error);
+      alert('Ошибка соединения с сервером.');
+    }
+  };
 
   const handleDelete = async () => {
     const titleText = article?.title || article?.Title || 'Без названия';
@@ -183,13 +225,11 @@ const handleRollback = async (versionId) => {
       if (response.ok) {
         alert('Статья успешно удалена');
 
-        if(activeArticleId === parseInt(id, 10)) {
+        if (activeArticleId === parseInt(id, 10)) {
           navigate('/home');
+        } else {
+          window.location.reload();
         }
-        else {
-        window.location.reload();
-        }
-        
       }
     } catch (error) {
       console.error(error);
@@ -292,7 +332,7 @@ const handleRollback = async (versionId) => {
         </Box>
       )}
 
-      {/* ПРАВАЯ КОЛОНКА: Контент статьи*/}
+      {/* Контент статьи*/}
       <Box sx={{ 
         flexGrow: 1, 
         boxSizing: 'border-box', 
@@ -357,6 +397,91 @@ const handleRollback = async (versionId) => {
           <Typography variant="body1" sx={{ fontSize: '1.15rem', lineHeight: '1.85', color: '#2c3e50', whiteSpace: 'pre-line', wordBreak: 'break-word' }}>
             {contentText}
           </Typography>
+          
+          {/* Виртуалки внизу */}
+          {isAdmin && attachedVms && attachedVms.length > 0 && (
+            <Box sx={{ mt: 6, width: '100%' }}>
+              
+              {/* Линия-разделитель */}
+              <Divider sx={{ mb: 4, borderColor: 'rgba(0, 0, 0, 0.08)' }} />
+              
+              <Typography 
+                variant="h5" 
+                component="h3" 
+                fontWeight="bold" 
+                sx={{ color: '#1e293b', mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
+              >
+                Связанная инфраструктура
+              </Typography>
+              
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                Виртуальные машины и сервера, развёрнутые для обеспечения работы данной подсистемы:
+              </Typography>
+
+              {/* Сетка горизонтальных карточек серверов */}
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+                {attachedVms.map((vm, idx) => {
+                  const vmId = vm.id || vm.Id;
+                  const vmStatus = (vm.status || vm.Status || 'active').toLowerCase();
+                  
+                  // Определяем цвет левой полоски карточки в зависимости от статуса сервера
+                  const getStatusColor = (status) => {
+                    if (status === 'active') return '#2e7d32'; // Зеленый
+                    if (status === 'stopped') return '#d32f2f'; // Красный
+                    return '#ed6c02'; // Оранжевый (Maintenance)
+                  };
+
+                  return (
+                    <Box 
+                      key={vmId || idx}
+                      onClick={() => navigate('/vms')} // Клик по серверу переводит на общий реестр VM
+                      sx={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'center',
+                        p: 2,
+                        backgroundColor: '#ffffff',
+                        border: '1px solid #e2e8f0',
+                        borderLeft: `4px solid ${getStatusColor(vmStatus)}`, // Цветная полоса статуса
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease-in-out',
+                        '&:hover': {
+                          transform: 'translateY(-2px)',
+                          boxShadow: '0 6px 12px rgba(0, 0, 0, 0.04)',
+                          borderColor: '#cbd5e1'
+                        }
+                      }}
+                    >
+                      {/* Название и статус */}
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                        <Typography variant="subtitle1" fontWeight="bold" sx={{ color: '#1e293b' }}>
+                          {vm.name || vm.Name}
+                        </Typography>
+                        <Box 
+                          sx={{ 
+                            width: '8px', height: '8px', borderRadius: '50%', 
+                            backgroundColor: getStatusColor(vmStatus) 
+                          }} 
+                        />
+                      </Box>
+
+                      {/* IP-Адрес (Моноширинный) */}
+                      <Typography variant="body2" sx={{ fontFamily: 'monospace', color: '#475569', mb: 0.5, fontWeight: 500 }}>
+                        IP: {vm.ipAddress || vm.IpAddress}
+                      </Typography>
+
+                      {/* Операционная система */}
+                      <Typography variant="caption" sx={{ color: '#94a3b8' }}>
+                        ОС: {vm.os || vm.OS || 'Не указана'}
+                      </Typography>
+                    </Box>
+                  );
+                })}
+              </Box>
+            </Box>
+          )}
+
 
         </Box>
       </Box>

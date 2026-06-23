@@ -22,17 +22,17 @@ public class ArticleController : ControllerBase
     public async Task<IActionResult> GetSuggestions([FromQuery] string query)
     {
         if (string.IsNullOrWhiteSpace(query))
-            return Ok(Array.Empty<object>()); // Возвращаем пустой массив
+            return Ok(Array.Empty<object>());
 
         try
         {
             var suggestions = await _context.Articles
                 .Where(a => EF.Functions.ILike(a.Title, $"%{query}%"))
-                .Select(a => new { a.Id, a.Title }) // Извлекаем И Id, И Title
+                .Select(a => new { a.Id, a.Title })
                 .Take(5)
                 .ToListAsync();
 
-            return Ok(suggestions); // Возвращает JSON: [{"id": 1, "title": "Квантунская армия"}]
+            return Ok(suggestions);
         }
         catch (Exception ex)
         {
@@ -122,14 +122,77 @@ public async Task<ActionResult<IEnumerable<ArticleReadDto>>> GetArticles()
 [HttpGet("{id}")]
 public async Task<ActionResult<ArticleReadDto>> GetArticle(int id)
 {
+    // Загружаем текущую статью со всеми связями
     var article = await _context.Articles
         .Include(a => a.Author)
         .Include(a => a.Categories)
-        .Include(a => a.VirtualMachines) // 🟢 ДОБАВЛЕНО: подгружаем связанные VM
+        .Include(a => a.VirtualMachines) // Машины самой статьи
         .AsNoTracking()
         .FirstOrDefaultAsync(a => a.Id == id);
 
     if (article == null) return NotFound();
+
+    // СОБИРАЕМ ИНФРАСТРУКТУРУ РОДИТЕЛЕЙ (Наверх по дереву подсистем)
+    var allVms = new List<VirtualMachineDto>();
+
+    // Сначала добавляем машины текущей статьи
+    if (article.VirtualMachines != null)
+    {
+        allVms.AddRange(article.VirtualMachines.Select(vm => new VirtualMachineDto
+        {
+            Id = vm.Id,
+            Name = vm.Name,
+            IpAddress = vm.IpAddress,
+            OS = vm.OS,
+            Status = vm.Status
+        }));
+    }
+
+    // Если у статьи есть родитель, поднимаемся вверх и забираем его машины тоже
+    int? currentParentId = article.ParentId;
+    while (currentParentId != null)
+    {
+        var parentArticle = await _context.Articles
+            .Include(a => a.VirtualMachines)
+            .AsNoTracking()
+            .FirstOrDefaultAsync(a => a.Id == currentParentId.Value);
+
+        if (parentArticle != null)
+        {
+            if (parentArticle.VirtualMachines != null)
+            {
+                foreach (var vm in parentArticle.VirtualMachines)
+                {
+                    // Защита от дубликатов: добавляем сервер, только если его еще нет в списке
+                    if (!allVms.Any(v => v.Id == vm.Id))
+                    {
+                        allVms.Add(new VirtualMachineDto
+                        {
+                            Id = vm.Id,
+                            Name = vm.Name,
+                            IpAddress = vm.IpAddress,
+                            OS = vm.OS,
+                            Status = vm.Status
+                        });
+                    }
+                }
+            }
+            currentParentId = parentArticle.ParentId; // Идем еще выше по иерархии (если есть)
+        }
+        else
+        {
+            break;
+        }
+    }
+
+    string? userRole = null;
+    if (User.Identity != null && User.Identity.IsAuthenticated)
+    {
+        userRole = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value 
+                   ?? User.FindFirst("role")?.Value;
+    }
+    
+    bool isUserAdmin = userRole == "admin";
 
     var articleDto = new ArticleReadDto
     {
@@ -142,20 +205,12 @@ public async Task<ActionResult<ArticleReadDto>> GetArticle(int id)
         AuthorName = article.Author?.Name ?? "Неизвестный автор",
         ParentId = article.ParentId,
         Categories = article.Categories.Select(c => c.Name).ToList(),
-        
-        // 🟢 Передаем список машин клиенту (не забудьте добавить это поле в ArticleReadDto)
-        VirtualMachines = article.VirtualMachines.Select(vm => new VirtualMachineDto
-        {
-            Id = vm.Id,
-            Name = vm.Name,
-            IpAddress = vm.IpAddress,
-            OS = vm.OS,
-            Status = vm.Status
-        }).ToList()
+        VirtualMachines = isUserAdmin ? allVms : new List<VirtualMachineDto>()
     };
 
     return Ok(articleDto);
 }
+
 
 
 [HttpGet("{id}/sidebar")]
@@ -181,7 +236,7 @@ public async Task<ActionResult<SidebarResponseDto>> GetSidebarTree(int id)
 
     var dict = allNodes.ToDictionary(n => n.Id);
     
-    // 🟢 ВЫЧИСЛЯЕМ ПУТЬ СТАТЬИ ДЛЯ АВТО-РАСКРЫТИЯ
+    //ВЫЧИСЛЯЕМ ПУТЬ СТАТЬИ ДЛЯ АВТО-РАСКРЫТИЯ
     var expandedIds = new List<string>();
     int? currentParentId = currentArticle.ParentId;
     
@@ -214,7 +269,6 @@ public async Task<ActionResult<SidebarResponseDto>> GetSidebarTree(int id)
         }
     }
 
-    // 🟢 ВОЗВРАЩАЕМ ОБЪЕКТ С ДЕРЕВОМ И ПУТЕМ РАСКРЫТИЯ
     var response = new SidebarResponseDto
     {
         Tree = rootNodes,
@@ -246,13 +300,24 @@ public async Task<ActionResult<SidebarResponseDto>> GetSidebarTree(int id)
             UpdatedAt = DateTime.UtcNow
         };
 
-        if (dto.CategoryIds.Any())
+        //Привязываем категории к статье
+        if (dto.CategoryIds != null && dto.CategoryIds.Any())
         {
             var categories = await _context.Categories
                 .Where(c => dto.CategoryIds.Contains(c.Id))
                 .ToListAsync();
             
             article.Categories = categories;
+        }
+
+        //Привязываем виртуальные машины ко множественной промежуточной таблице
+        if (dto.VirtualMachineIds != null && dto.VirtualMachineIds.Any())
+        {
+            var selectedVms = await _context.VirtualMachines
+                .Where(vm => dto.VirtualMachineIds.Contains(vm.Id))
+                .ToListAsync();
+            
+            article.VirtualMachines = selectedVms;
         }
 
         _context.Articles.Add(article);
@@ -267,11 +332,22 @@ public async Task<ActionResult<SidebarResponseDto>> GetSidebarTree(int id)
             UpdatedAt = article.UpdatedAt,
             AuthorId = article.AuthorId,
             AuthorName = author.Name,
-            Categories = article.Categories.Select(c => c.Name).ToList()
+            Categories = article.Categories.Select(c => c.Name).ToList(),
+            
+            //Маппим связанные машины в итоговый DTO ответа для фронтенда
+            VirtualMachines = article.VirtualMachines.Select(vm => new VirtualMachineDto
+            {
+                Id = vm.Id,
+                Name = vm.Name,
+                IpAddress = vm.IpAddress,
+                OS = vm.OS,
+                Status = vm.Status
+            }).ToList()
         };
 
         return CreatedAtAction(nameof(GetArticle), new { id = article.Id }, responseDto);
     }
+
 
     [HttpPut("{id}")]
     [Authorize(Roles = "admin")]
@@ -279,6 +355,7 @@ public async Task<ActionResult<SidebarResponseDto>> GetSidebarTree(int id)
     {
         var article = await _context.Articles
             .Include(a => a.Categories)
+            .Include(a => a.VirtualMachines) //Подгружаем связанные машины перед обновлением
             .FirstOrDefaultAsync(a => a.Id == id);
 
         if (article == null)
@@ -286,13 +363,14 @@ public async Task<ActionResult<SidebarResponseDto>> GetSidebarTree(int id)
             return NotFound(new { message = $"Статья для обновления с ID {id} не найдена." });
         }
 
-        if (article.Content != dto.Content)//Логируем старый контент в историю изменений, если текст поменялся
+        // Логируем старый контент в историю изменений, если текст поменялся
+        if (article.Content != dto.Content)
         {
             var historyEntry = new HistoryOfChanges
             {
                 ArticleId = article.Id,
                 OldContent = article.Content,
-                EditorId = dto.AuthorId, // Пользователь, приславший изменения, становится редактором
+                EditorId = dto.AuthorId, 
                 ChangedAt = DateTime.UtcNow
             };
             _context.HistoryOfChanges.Add(historyEntry);
@@ -303,14 +381,26 @@ public async Task<ActionResult<SidebarResponseDto>> GetSidebarTree(int id)
         article.ParentId = dto.ParentId;
         article.UpdatedAt = DateTime.UtcNow;
 
-        article.Categories.Clear(); // Сбрасываем старые связи
-        if (dto.CategoryIds.Any())
+        // Обновляем связи с категориями
+        article.Categories.Clear(); 
+        if (dto.CategoryIds != null && dto.CategoryIds.Any())
         {
             var categories = await _context.Categories
                 .Where(c => dto.CategoryIds.Contains(c.Id))
                 .ToListAsync();
             
             article.Categories = categories;
+        }
+
+        //Синхронизируем связи с виртуальными машинами («многие-ко-многим»)
+        article.VirtualMachines.Clear(); // Сбрасываем старые привязанные сервера для этой статьи
+        if (dto.VirtualMachineIds != null && dto.VirtualMachineIds.Any())
+        {
+            var selectedVms = await _context.VirtualMachines
+                .Where(vm => dto.VirtualMachineIds.Contains(vm.Id))
+                .ToListAsync();
+            
+            article.VirtualMachines = selectedVms;
         }
 
         try

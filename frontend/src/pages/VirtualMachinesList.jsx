@@ -40,9 +40,16 @@ export default function VirtualMachinesList() {
     }
   };
 
-  useEffect(() => {
+    useEffect(() => {
+    const currentRole = localStorage.getItem('role');
+    if (currentRole !== 'admin') {
+        navigate('/home');
+        return;
+    }
+
+    // Если всё хорошо и это админ — загружаем список машин
     fetchVirtualMachines();
-  }, []);
+    }, [navigate]);
 
   //ункция удаления виртуальной машины администратором
   const handleDeleteVM = async (e, vmId, vmName) => {

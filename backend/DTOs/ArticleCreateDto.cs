@@ -17,4 +17,7 @@ public class ArticleCreateDto
     public int? ParentId{get; set;}
 
     public List<int> CategoryIds { get; set; } = new();
+
+    public List<int> VirtualMachineIds { get; set; } = new List<int>();
+
 }

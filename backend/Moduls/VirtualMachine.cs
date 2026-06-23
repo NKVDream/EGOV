@@ -29,6 +29,5 @@ public class VirtualMachine
     [Column("status")]
     public string Status { get; set; } = "Active";
 
-    // 🟢 ИСПРАВЛЕНО: Коллекция статей для бесконечной связи «многие-ко-многим»
     public virtual ICollection<Article> Articles { get; set; } = new List<Article>();
 }

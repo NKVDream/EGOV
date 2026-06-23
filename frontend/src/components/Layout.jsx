@@ -69,7 +69,9 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
 export default function Layout({ children }) {
   const navigate = useNavigate();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
   const username = localStorage.getItem('username') || 'Пользователь';
+  const isAdmin = localStorage.getItem('role') === 'admin';
 
   // Состояния для автокомплита поиска
   const [input, setInput] = useState('');
@@ -243,11 +245,13 @@ export default function Layout({ children }) {
                 <ListItemText primary="Главная страница" />
               </ListItemButton>
             </ListItem>
-            <ListItem disablePadding>
-              <ListItemButton onClick={() => navigate('/vms')}>
-                <ListItemText primary="Виртуальные Машины" />
-              </ListItemButton>
-            </ListItem>
+            {isAdmin && (
+              <ListItem disablePadding>
+                <ListItemButton onClick={() => navigate('/vms')}>
+                  <ListItemText primary="Виртуальные Машины" />
+                </ListItemButton>
+              </ListItem>
+            )}
           </List>
           
           <Divider />

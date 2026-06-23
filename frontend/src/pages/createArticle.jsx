@@ -3,7 +3,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { 
   Box, TextField, Button, Typography, Container, 
   CircularProgress, Alert, MenuItem, Select, InputLabel, 
-  FormControl, Chip, OutlinedInput, Divider
+  FormControl, Chip, OutlinedInput, Divider, Checkbox, ListItemText
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
@@ -20,6 +20,10 @@ export default function CreateArticle() {
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [parentId, setParentId] = useState(null);
   const [parentTitle, setParentTitle] = useState('');
+
+  // 🟢 НОВЫЕ СОСТОЯНИЯ ДЛЯ ИНТЕГРАЦИИ ВИРТУАЛЬНЫХ МАШИН
+  const [vmsList, setVmsList] = useState([]); // Все машины из базы данных
+  const [selectedVmIds, setSelectedVmIds] = useState([]); // Выбранные ID машин для этой статьи
 
   // Системные состояния
   const [categoriesList, setCategoriesList] = useState([]);
@@ -51,19 +55,22 @@ export default function CreateArticle() {
     }
   }, [parentId]);
 
+  // 3. 🟢 СИНХРОННАЯ ЗАГРУЗКА ДАННЫХ ДЛЯ ФОРМЫ
   useEffect(() => {
-    async function loadCategories() {
+    async function loadInitialFormData() {
       try {
-        const response = await fetch('http://localhost:5170/api/Category');
-        if (response.ok) {
-          const data = await response.json();
-          setCategoriesList(data);
-        }
+        // Категории
+        const catResponse = await fetch('http://localhost:5170/api/Category');
+        if (catResponse.ok) setCategoriesList(await catResponse.json());
+
+        // 🟢 Подгружаем реестр всех виртуальных машин для выпадающего списка
+        const vmResponse = await fetch('http://localhost:5170/api/VirtualMachine');
+        if (vmResponse.ok) setVmsList(await vmResponse.json());
       } catch (err) {
-        console.error("Не удалось загрузить категории:", err);
+        console.error("Не удалось инициализировать данные формы:", err);
       }
     }
-    loadCategories();
+    loadInitialFormData();
 
     if (isEditMode) {
       async function fetchArticleData() {
@@ -75,9 +82,14 @@ export default function CreateArticle() {
             setTitle(data.title || data.Title);
             setContent(data.content || data.Content);
             setParentId(data.parentId || data.ParentId || null);
+            
             if (data.categoryIds || data.CategoryIds) {
               setSelectedCategories(data.categoryIds || data.CategoryIds);
             }
+
+            // 🟢 Автоматически зажигаем чекбоксы на привязанных к этой статье машинах
+            const attachedVms = data.virtualMachines || data.VirtualMachines || [];
+            setSelectedVmIds(attachedVms.map(vm => vm.id || vm.Id));
           } else {
             setError('Статья не найдена или удалена');
           }
@@ -90,7 +102,7 @@ export default function CreateArticle() {
       fetchArticleData();
     }
   }, [id, isEditMode]);
-
+  // 4. Обработчик отправки формы
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -104,12 +116,15 @@ export default function CreateArticle() {
     const token = localStorage.getItem('token'); 
     const authorId = parseInt(localStorage.getItem('userId')) || 1;
 
+    // Собираем объект DTO
     const articleDto = {
       title: title.trim(),
       content: content.trim(),
       authorId: authorId,
       parentId: parentId,
-      categoryIds: selectedCategories
+      categoryIds: selectedCategories,
+      // 🟢 Передаем массив выбранных ID виртуальных машин бэкенду
+      virtualMachineIds: selectedVmIds 
     };
 
     setLoading(true);
@@ -175,9 +190,8 @@ export default function CreateArticle() {
         >
           Назад
         </Button>
-
-        {/* ЗАГОЛОВКА С СИНЕЙ ЛИНИЕЙ (КАК НА СТРАНИЦЕ ЧТЕНИЯ) */}
-        <Box sx={(theme) => ({ borderLeft: `6px solid ${theme.palette.primary.main}`, pl: 2, mb: 1, width: '100%', boxSizing: 'border-box' })}>
+        
+        <Box>
           <Typography variant="h3" component="h1" fontWeight="bold" sx={{ fontSize: { xs: '2.2rem', md: '3.2rem' }, color: 'text.primary', lineHeight: 1.2 }}>
             {isEditMode ? 'Редактирование статьи' : 'Создание новой статьи'}
           </Typography>
@@ -234,6 +248,38 @@ export default function CreateArticle() {
                   {category.name || category.Name}
                 </MenuItem>
               ))}
+            </Select>
+          </FormControl>
+
+          {/* 🟢 МНОЖЕСТВЕННЫЙ ВЫБОР ВИРТУАЛЬНЫХ МАШИН ДЛЯ ЭТОЙ ПОДСИСТЕМЫ */}
+          <FormControl fullWidth sx={{ backgroundColor: '#ffffff', borderRadius: 1 }}>
+            <InputLabel id="vms-multiple-label">Виртуальные машины инфраструктуры</InputLabel>
+            <Select
+              labelId="vms-multiple-label"
+              multiple
+              value={selectedVmIds}
+              onChange={(e) => setSelectedVmIds(e.target.value)}
+              input={<OutlinedInput label="Виртуальные машины инфраструктуры" />}
+              renderValue={(selected) => (
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                  {selected.map((value) => {
+                    const vm = vmsList.find(v => (v.id || v.Id) === value);
+                    return <Chip key={value} label={vm ? `${vm.name || vm.Name} (${vm.ipAddress || vm.IpAddress})` : `VM #${value}`} size="small" color="primary" variant="outlined" />;
+                  })}
+                </Box>
+              )}
+            >
+              {vmsList.map((vm) => {
+                const vmId = vm.id || vm.Id;
+                const vmName = vm.name || vm.Name;
+                const vmIp = vm.ipAddress || vm.IpAddress;
+                return (
+                  <MenuItem key={vmId} value={vmId}>
+                    <Checkbox checked={selectedVmIds.indexOf(vmId) > -1} />
+                    <ListItemText primary={`${vmName} [${vmIp}]`} />
+                  </MenuItem>
+                );
+              })}
             </Select>
           </FormControl>
 
