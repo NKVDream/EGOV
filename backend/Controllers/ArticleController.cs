@@ -119,35 +119,44 @@ public async Task<ActionResult<IEnumerable<ArticleReadDto>>> GetArticles()
 
 
 
-    [HttpGet("{id}")]
-    public async Task<ActionResult<ArticleReadDto>> GetArticle(int id)
+[HttpGet("{id}")]
+public async Task<ActionResult<ArticleReadDto>> GetArticle(int id)
+{
+    var article = await _context.Articles
+        .Include(a => a.Author)
+        .Include(a => a.Categories)
+        .Include(a => a.VirtualMachines) // 🟢 ДОБАВЛЕНО: подгружаем связанные VM
+        .AsNoTracking()
+        .FirstOrDefaultAsync(a => a.Id == id);
+
+    if (article == null) return NotFound();
+
+    var articleDto = new ArticleReadDto
     {
-        var article = await _context.Articles
-            .Include(a => a.Author)
-            .Include(a => a.Categories)
-            .AsNoTracking()
-            .FirstOrDefaultAsync(a => a.Id == id);
-
-        if (article == null)
+        Id = article.Id,
+        Title = article.Title,
+        Content = article.Content,
+        CreatedAt = article.CreatedAt,
+        UpdatedAt = article.UpdatedAt,
+        AuthorId = article.AuthorId,
+        AuthorName = article.Author?.Name ?? "Неизвестный автор",
+        ParentId = article.ParentId,
+        Categories = article.Categories.Select(c => c.Name).ToList(),
+        
+        // 🟢 Передаем список машин клиенту (не забудьте добавить это поле в ArticleReadDto)
+        VirtualMachines = article.VirtualMachines.Select(vm => new VirtualMachineDto
         {
-            return NotFound(new { message = $"Статья с ID {id} не найдена." });
-        }
+            Id = vm.Id,
+            Name = vm.Name,
+            IpAddress = vm.IpAddress,
+            OS = vm.OS,
+            Status = vm.Status
+        }).ToList()
+    };
 
-        var articleDto = new ArticleReadDto
-        {
-            Id = article.Id,
-            Title = article.Title,
-            Content = article.Content,
-            CreatedAt = article.CreatedAt,
-            UpdatedAt = article.UpdatedAt,
-            AuthorId = article.AuthorId,
-            AuthorName = article.Author?.Name ?? "Неизвестный автор",
-            ParentId = article.ParentId,
-            Categories = article.Categories.Select(c => c.Name).ToList()
-        };
+    return Ok(articleDto);
+}
 
-        return Ok(articleDto);
-    }
 
 [HttpGet("{id}/sidebar")]
 public async Task<ActionResult<SidebarResponseDto>> GetSidebarTree(int id)

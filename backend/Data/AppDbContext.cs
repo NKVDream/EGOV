@@ -21,6 +21,13 @@ protected override void OnModelCreating(ModelBuilder modelBuilder)
 {
     base.OnModelCreating(modelBuilder);
 
+    modelBuilder.Entity<VirtualMachine>()
+    .HasOne(vm => vm.Article)
+    .WithMany(a => a.VirtualMachines)
+    .HasForeignKey(vm => vm.ArticleId)
+    .OnDelete(DeleteBehavior.SetNull); // Если статья удалится, VM не удалятся, а просто отвяжутся
+
+
     modelBuilder.Entity<Article>()
         .HasOne(a => a.Parent)
         .WithMany(a => a.Children)

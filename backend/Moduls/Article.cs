@@ -34,4 +34,7 @@ public class Article
     public virtual Article? Parent {get; set;}
     public virtual ICollection<Article> Children{get; set;} = new List<Article>();
     public ICollection<Category> Categories { get; set; } = new List<Category>();
+
+    public virtual ICollection<VirtualMachine> VirtualMachines { get; set; } = new List<VirtualMachine>();
+
 }

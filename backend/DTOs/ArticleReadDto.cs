@@ -12,4 +12,6 @@ public class ArticleReadDto
     public int? ParentId { get; set; }
     public List<string> Categories { get; set; } = new();
     public List<ArticleMenuDto> Children { get; set; } = new();
+    public List<VirtualMachineDto> VirtualMachines { get; set; } = new List<VirtualMachineDto>();
+
 }
