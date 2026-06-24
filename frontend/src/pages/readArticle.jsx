@@ -21,6 +21,7 @@ import { SidebarTree } from '../components/SidebarTree';
 import { jsPDF } from 'jspdf'; 
 import html2canvas from 'html2canvas'; 
 
+
 export default function ReadArticle() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -45,14 +46,13 @@ export default function ReadArticle() {
   // Стейт для закрытия/открытия сайдбара
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
-  // 1. СИНХРОНИЗАЦИЯ: Принудительно обновляем внутренний стейт при смене ID в URL
   useEffect(() => {
     if (id) {
       setActiveArticleId(parseInt(id, 10));
     }
   }, [id]);
 
-  // 2. ХУК: Загрузка структуры сайдбара при смене ID в URL
+  // хук загрузка структуры сайдбара при смене ID в URL
   useEffect(() => {
     if (id) {
       fetch(`http://localhost:5170/api/Article/${id}/sidebar`)
@@ -77,7 +77,7 @@ export default function ReadArticle() {
     }
   }, [id]);
 
-  // 3. ФУНКЦИЯ: Загрузка содержимого статьи и связанных виртуальных машин
+  // Загрузка содержимого статьи и связанных виртуальных машин
   const fetchArticle = async () => {
     setLoading(true);
     setError('');
@@ -115,41 +115,40 @@ export default function ReadArticle() {
     fetchArticle();
   }, [activeArticleId]);
 
-  // 4. ФУНКЦИЯ: Выгрузка статьи и инфраструктуры в PDF
+  //Выгрузка статьи и инфраструктуры в PDF
   const handleDownloadPDF = async () => {
     const element = document.getElementById('article-pdf-content');
     if (!element) return;
 
     try {
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        logging: false
-      });
+      const html2pdf = (await import('html2pdf.js')).default;
 
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const imgWidth = 210; 
-      const pageHeight = 295; 
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      let heightLeft = imgHeight;
-      let position = 0;
-
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
-
-      while (heightLeft >= 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
-      }
-
+      // Получаем название статьи для имени файла
       const rawTitle = article?.title || article?.Title || 'article';
       const fileName = `${rawTitle.replace(/[^a-zA-Z0-9а-яА-Я ]/g, '')}.pdf`;
-      pdf.save(fileName);
+
+      // Настройки печати
+      const options = {
+        margin: [15, 15, 15, 15],
+        filename: fileName,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { 
+          scale: 2, 
+          useCORS: true,
+          logging: false
+        },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak: { 
+          mode: ['avoid-all', 'css', 'legacy'],
+          avoid: ['.MuiTypography-body1', 'tr', '.MuiBox-root']
+        }
+      };
+
+      // Запускаем нативную сборку документа
+      await html2pdf().set(options).from(element).save();
+
     } catch (err) {
-      console.error("Ошибка при генерации PDF:", err);
+      console.error("Ошибка при умной генерации PDF:", err);
       alert("Не удалось сгенерировать PDF файл.");
     }
   };
@@ -340,56 +339,79 @@ export default function ReadArticle() {
         pt: 5, 
         pb: 6
       }}>
-        <Box sx={{ maxWidth: '850px', width: '100%', mx: 'auto', position: 'relative' }}>
+      <Box sx={{ maxWidth: '850px', width: '100%', mx: 'auto', position: 'relative' }}>
           
-          {/* КНОПКА НАЗАД */}
+          {/* КНОПКА НАЗАД (Осталась снаружи, чтобы не попадать в PDF) */}
           <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/home')} sx={{ mb: 4, textTransform: 'none', fontWeight: 'bold' }} color="inherit">
             Назад
           </Button>
+          
+          <Box sx={{ position: 'absolute', top: 0, right: 0, display: 'flex', gap: 1, zIndex: 2 }}>
+            
+            {/*КНОПКА СКАЧИВАНИЯ PDF (Доступна абсолютно всем пользователям) */}
+            <Tooltip title="Скачать в формате PDF">
+              <IconButton 
+                color="secondary" 
+                onClick={handleDownloadPDF} 
+                sx={{ 
+                  backgroundColor: '#ffffff', 
+                  boxShadow: '0px 2px 8px rgba(0,0,0,0.08)',
+                  border: '1px solid #e2e8f0',
+                  '&:hover': { backgroundColor: '#fcf5ff', borderColor: '#d8b4fe' } 
+                }}
+              >
+                <PictureAsPdfIcon />
+              </IconButton>
+            </Tooltip>
 
-          {/* БЛОК КНОПОК ДЛЯ АДМИНИСТРАТОРА*/}
-          {isAdmin && (
-            <Box sx={{ position: 'absolute', top: 0, right: 0, display: 'flex', gap: 1, zIndex: 2 }}>
-              <Tooltip title="Создать подстатью">
-                <IconButton color="success" onClick={() => navigate(`/article/create?parentId=${id}`)} sx={{ backgroundColor: '#ffffff', boxShadow: '0px 2px 8px rgba(0,0,0,0.08)' }}><AddIcon /></IconButton>
-              </Tooltip>
-              <Tooltip title="История изменений">
-                <IconButton color="default" onClick={handleOpenHistory} sx={{ backgroundColor: '#ffffff', boxShadow: '0px 2px 8px rgba(0,0,0,0.08)' }}><HistoryIcon /></IconButton>
-              </Tooltip>
-              <Tooltip title="Редактировать статью">
-                <IconButton color="primary" onClick={() => navigate(`/article/edit/${id}`)} sx={{ backgroundColor: '#ffffff', boxShadow: '0px 2px 8px rgba(0,0,0,0.08)' }}><EditIcon /></IconButton>
-              </Tooltip>
-              <Tooltip title="Удалить статью">
-                <IconButton color="error" onClick={handleDelete} sx={{ backgroundColor: '#ffffff', boxShadow: '0px 2px 8px rgba(0,0,0,0.08)' }}><DeleteIcon /></IconButton>
-              </Tooltip>
-            </Box>
-          )}
-
-          {/* БЛОК ЗАГОЛОВКА */}
-          <Box sx={(theme) => ({ borderLeft: `6px solid ${theme.palette.primary.main}`, pl: 2.5, mb: 3, width: '100%' })}>
-            <Typography variant="h3" component="h1" fontWeight="bold" sx={{ fontSize: { xs: '2.2rem', md: '3rem' }, color: 'text.primary', lineHeight: 1.2, pr: isAdmin ? { xs: 18, md: 22 } : 0 }}>
-              {titleText}
-            </Typography>
-          </Box>
-
-          {/* МЕТА-ИНФОРМАЦИЯ */}
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 3, mt: 2, mb: 4, color: 'text.secondary' }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <PersonIcon fontSize="small" />
-              <Typography variant="body2" fontWeight="medium">{authorName}</Typography>
-            </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <CalendarTodayIcon fontSize="small" />
-              <Typography variant="body2">{dateText}</Typography>
-            </Box>
-            {categories.length > 0 && (
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, ml: { md: 'auto' } }}>
-                {categories.map((cat, idx) => (
-                  <Chip key={idx} label={typeof cat === 'object' ? (cat.name || cat.Name) : cat} size="small" variant="outlined" sx={{ fontWeight: '500', backgroundColor: '#ffffff' }} />
-                ))}
-              </Box>
+            {/* БЛОК КНОПОК ДЛЯ АДМИНИСТРАТОРА */}
+            {isAdmin && (
+              <>
+                <Tooltip title="Создать подстатью">
+                  <IconButton color="success" onClick={() => navigate(`/article/create?parentId=${id}`)} sx={{ backgroundColor: '#ffffff', boxShadow: '0px 2px 8px rgba(0,0,0,0.08)' }}><AddIcon /></IconButton>
+                </Tooltip>
+                <Tooltip title="История изменений">
+                  <IconButton color="default" onClick={handleOpenHistory} sx={{ backgroundColor: '#ffffff', boxShadow: '0px 2px 8px rgba(0,0,0,0.08)' }}><HistoryIcon /></IconButton>
+                </Tooltip>
+                <Tooltip title="Редактировать статью">
+                  <IconButton color="primary" onClick={() => navigate(`/article/edit/${id}`)} sx={{ backgroundColor: '#ffffff', boxShadow: '0px 2px 8px rgba(0,0,0,0.08)' }}><EditIcon /></IconButton>
+                </Tooltip>
+                <Tooltip title="Удалить статью">
+                  <IconButton color="error" onClick={handleDelete} sx={{ backgroundColor: '#ffffff', boxShadow: '0px 2px 8px rgba(0,0,0,0.08)' }}><DeleteIcon /></IconButton>
+                </Tooltip>
+              </>
             )}
           </Box>
+
+          {/*Все, что внутри этого Box, html2canvas упакует в PDF-файл */}
+          <Box id="article-pdf-content" sx={{ width: '100%', pt: 1, backgroundColor: 'transparent' }}>
+
+            {/* БЛОК ЗАГОЛОВКА */}
+            <Box sx={(theme) => ({ borderLeft: `6px solid ${theme.palette.primary.main}`, pl: 2.5, mb: 3, width: '100%' })}>
+              {/* pr увеличен, чтобы заголовок не врезался в добавленную кнопку PDF */}
+              <Typography variant="h3" component="h1" fontWeight="bold" sx={{ fontSize: { xs: '2.2rem', md: '3rem' }, color: 'text.primary', lineHeight: 1.2, pr: isAdmin ? { xs: 24, md: 28 } : 6 }}>
+                {titleText}
+              </Typography>
+            </Box>
+
+            {/* МЕТА-ИНФОРМАЦИЯ */}
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 3, mt: 2, mb: 4, color: 'text.secondary' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <PersonIcon fontSize="small" />
+                <Typography variant="body2" fontWeight="medium">{authorName}</Typography>
+              </Box>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <CalendarTodayIcon fontSize="small" />
+                <Typography variant="body2">{dateText}</Typography>
+              </Box>
+              {categories.length > 0 && (
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, ml: { md: 'auto' } }}>
+                  {categories.map((cat, idx) => (
+                    <Chip key={idx} label={typeof cat === 'object' ? (cat.name || cat.Name) : cat} size="small" variant="outlined" sx={{ fontWeight: '500', backgroundColor: '#ffffff' }} />
+                  ))}
+                </Box>
+              )}
+            </Box>
 
           <Divider sx={{ mb: 4 }} />
 
@@ -481,7 +503,7 @@ export default function ReadArticle() {
               </Box>
             </Box>
           )}
-
+          </Box>
 
         </Box>
       </Box>
