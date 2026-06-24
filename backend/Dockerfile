@@ -1,17 +1,25 @@
-Form ://microsoft.com AS build
-workdir /src
+#Этап сборки (Build)
+FROM ://microsoft.com AS build-env
+WORKDIR /app
 
-copy ["backend.csproj", "./"]
-run dotnet restore "./backend.csproj"
+# Копируем файл проекта и восстанавливаем зависимости (кэшируемый слой)
+COPY *.csproj ./
+RUN dotnet restore
 
-copy ..
-run dotnet publish "backend.csproj" -c Release -o /app/publish
+# Копируем весь остальной код бэкенда и собираем релизную версию
+COPY . ./
+RUN dotnet publish -c Release -o out
 
-from ://microsoft.com as final
-workdir /app
-copy --from=build /app/publish .
+#Этап запуска (Runtime)
+FROM ://microsoft.com
+WORKDIR /app
 
-expose 8080
-env aspnetcore_urls=http://+:8080
+# Копируем скомпилированные файлы из предыдущего этапа
+COPY --from=build-env /app/out .
 
-entrypoint ["dotnet", "backend.dll"]
+# Открываем порт, на котором будет слушать бэкенд внутри контейнера
+EXPOSE 5170
+ENV ASPNETCORE_URLS=http://+:5170
+
+# Команда запуска бэкенда (замените Egov.dll на точное имя вашего .dll файла проекта, если оно отличается)
+ENTRYPOINT ["dotnet", "Egov.dll"]
