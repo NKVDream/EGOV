@@ -6,6 +6,8 @@ import {
   FormControl, Chip, OutlinedInput, Divider, Checkbox, ListItemText
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import TextEditor from '../components/TextEditor';
+
 
 export default function CreateArticle() {
   const { id } = useParams();
@@ -304,23 +306,38 @@ export default function CreateArticle() {
           </FormControl>
 
 
-          <TextField
-            required
-            fullWidth
-            multiline
-            rows={14}
-            label="Содержимое статьи"
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            disabled={loading}
-            variant="outlined"
-            sx={{ backgroundColor: '#ffffff', borderRadius: 1 }}
-            inputProps={{ 
-              spellCheck: true, 
-              lang: 'ru',
-              style: { fontFamily: 'inherit', lineHeight: '1.6' }
-            }} 
-          />
+          {/*ПОЛНОЦЕННЫЙ ТЕКСТОВЫЙ РЕДАКТОР С ПОДДЕРЖКОЙ КАРТИНОК И ЗАГОЛОВКОВ */}
+          <Box 
+            sx={{ 
+              width: '100%', 
+              backgroundColor: '#ffffff', 
+              borderRadius: 1, // Сохраняем borderRadius: 1 как у TextField
+              mt: 1,
+              // Блокируем интерфейс редактора визуально, если идет отправка/загрузка данных (loading)
+              opacity: loading ? 0.6 : 1,
+              pointerEvents: loading ? 'none' : 'auto',
+            }}
+          >
+            <Typography 
+              variant="body2" 
+              sx={{ 
+                pl: 1, 
+                mb: 0.5, 
+                color: 'text.secondary', 
+                fontWeight: 500,
+                fontSize: '0.85rem'
+              }}
+            >
+              Содержимое статьи *
+            </Typography>
+
+            <TextEditor 
+              value={content} 
+              // Напрямую передаем HTML-строку из редактора в ваш существующий стейт setContent
+              onChange={(htmlContent) => setContent(htmlContent)} 
+              placeholder="содержание"
+            />
+          </Box>
 
           {/* КНОПКИ УПРАВЛЕНИЯ */}
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 1 }}>

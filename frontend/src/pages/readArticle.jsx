@@ -19,7 +19,8 @@ import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import Layout from '../components/Layout';
 import { SidebarTree } from '../components/SidebarTree';
 import { jsPDF } from 'jspdf'; 
-import html2canvas from 'html2canvas'; 
+import html2canvas from 'html2canvas';
+import 'react-quill/dist/quill.snow.css';
 
 
 export default function ReadArticle() {
@@ -348,8 +349,11 @@ export default function ReadArticle() {
           
           <Box sx={{ position: 'absolute', top: 0, right: 0, display: 'flex', gap: 1, zIndex: 2 }}>
             
-            {/*КНОПКА СКАЧИВАНИЯ PDF (Доступна абсолютно всем пользователям) */}
-            <Tooltip title="Скачать в формате PDF">
+
+            {/* БЛОК КНОПОК ДЛЯ АДМИНИСТРАТОРА */}
+            {isAdmin && (
+              <>
+              <Tooltip title="Скачать в формате PDF">
               <IconButton 
                 color="secondary" 
                 onClick={handleDownloadPDF} 
@@ -363,10 +367,6 @@ export default function ReadArticle() {
                 <PictureAsPdfIcon />
               </IconButton>
             </Tooltip>
-
-            {/* БЛОК КНОПОК ДЛЯ АДМИНИСТРАТОРА */}
-            {isAdmin && (
-              <>
                 <Tooltip title="Создать подстатью">
                   <IconButton color="success" onClick={() => navigate(`/article/create?parentId=${id}`)} sx={{ backgroundColor: '#ffffff', boxShadow: '0px 2px 8px rgba(0,0,0,0.08)' }}><AddIcon /></IconButton>
                 </Tooltip>
@@ -416,9 +416,69 @@ export default function ReadArticle() {
           <Divider sx={{ mb: 4 }} />
 
           {/* СОДЕРЖИМОЕ СТАТЬИ */}
-          <Typography variant="body1" sx={{ fontSize: '1.15rem', lineHeight: '1.85', color: '#2c3e50', whiteSpace: 'pre-line', wordBreak: 'break-word' }}>
-            {contentText}
-          </Typography>
+          <Box 
+            className="ql-editor" 
+            dangerouslySetInnerHTML={{ __html: contentText }} 
+            sx={{ 
+              fontSize: '1.15rem', 
+              lineHeight: '1.85', 
+              color: '#2c3e50', 
+              wordBreak: 'break-word',
+              px: 0,
+              
+              // Базовые адаптивные стили для всех картинок статьи
+              '& img': {
+                maxWidth: '100%',
+                height: 'auto',
+                borderRadius: '8px',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+                my: 3,
+                display: 'inline-block' // inline-block позволяет родителю выравнивать картинку текстом
+              },
+              
+              '& .ql-align-center': {
+                textAlign: 'center',
+                display: 'block !important',
+                width: '100%',
+                '& img': {
+                  margin: '10px auto !important',
+                  display: 'block'
+                }
+              },
+              '& .ql-align-right': {
+                textAlign: 'right',
+                display: 'block !important',
+                width: '100%',
+                '& img': {
+                  margin: '10px 0 10px auto !important',
+                  display: 'block'
+                }
+              },
+              '& .ql-align-left': {
+                textAlign: 'left',
+                display: 'block !important',
+                width: '100%',
+                '& img': {
+                  margin: '10px auto 10px 0 !important',
+                  display: 'block'
+                }
+              },
+              
+              // Оформление заголовков внутри текста
+              '& h1, & h2, & h3': {
+                color: '#1e293b',
+                fontWeight: 'bold',
+                mt: 4,
+                mb: 2
+              },
+              
+              // Оформление списков
+              '& ul, & ol': {
+                pl: 3,
+                my: 2
+              }
+            }} 
+          />
           
           {/* Виртуалки внизу */}
           {isAdmin && attachedVms && attachedVms.length > 0 && (
