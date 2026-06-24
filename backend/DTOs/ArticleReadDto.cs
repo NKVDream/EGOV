@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace Egov.DTOs;
 
 public class ArticleReadDto
@@ -13,5 +15,9 @@ public class ArticleReadDto
     public List<string> Categories { get; set; } = new();
     public List<ArticleMenuDto> Children { get; set; } = new();
     public List<VirtualMachineDto> VirtualMachines { get; set; } = new List<VirtualMachineDto>();
+
+    [JsonPropertyName("virtualMachineIds")] 
+    public List<int> VirtualMachineIds { get; set; } = new List<int>();
+
 
 }

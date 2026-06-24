@@ -122,78 +122,26 @@ public async Task<ActionResult<IEnumerable<ArticleReadDto>>> GetArticles()
 [HttpGet("{id}")]
 public async Task<ActionResult<ArticleReadDto>> GetArticle(int id)
 {
-    // Загружаем текущую статью со всеми связями
+    // Загружаем статью строго с её собственными виртуальными машинами
     var article = await _context.Articles
         .Include(a => a.Author)
         .Include(a => a.Categories)
-        .Include(a => a.VirtualMachines) // Машины самой статьи
+        .Include(a => a.VirtualMachines) 
         .AsNoTracking()
         .FirstOrDefaultAsync(a => a.Id == id);
 
     if (article == null) return NotFound();
 
-    // СОБИРАЕМ ИНФРАСТРУКТУРУ РОДИТЕЛЕЙ (Наверх по дереву подсистем)
-    var allVms = new List<VirtualMachineDto>();
-
-    // Сначала добавляем машины текущей статьи
-    if (article.VirtualMachines != null)
-    {
-        allVms.AddRange(article.VirtualMachines.Select(vm => new VirtualMachineDto
-        {
-            Id = vm.Id,
-            Name = vm.Name,
-            IpAddress = vm.IpAddress,
-            OS = vm.OS,
-            Status = vm.Status
-        }));
-    }
-
-    // Если у статьи есть родитель, поднимаемся вверх и забираем его машины тоже
-    int? currentParentId = article.ParentId;
-    while (currentParentId != null)
-    {
-        var parentArticle = await _context.Articles
-            .Include(a => a.VirtualMachines)
-            .AsNoTracking()
-            .FirstOrDefaultAsync(a => a.Id == currentParentId.Value);
-
-        if (parentArticle != null)
-        {
-            if (parentArticle.VirtualMachines != null)
-            {
-                foreach (var vm in parentArticle.VirtualMachines)
-                {
-                    // Защита от дубликатов: добавляем сервер, только если его еще нет в списке
-                    if (!allVms.Any(v => v.Id == vm.Id))
-                    {
-                        allVms.Add(new VirtualMachineDto
-                        {
-                            Id = vm.Id,
-                            Name = vm.Name,
-                            IpAddress = vm.IpAddress,
-                            OS = vm.OS,
-                            Status = vm.Status
-                        });
-                    }
-                }
-            }
-            currentParentId = parentArticle.ParentId; // Идем еще выше по иерархии (если есть)
-        }
-        else
-        {
-            break;
-        }
-    }
-
+    // Безопасное извлечение роли из JWT-токена
     string? userRole = null;
     if (User.Identity != null && User.Identity.IsAuthenticated)
     {
         userRole = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value 
                    ?? User.FindFirst("role")?.Value;
     }
-    
     bool isUserAdmin = userRole == "admin";
 
+    // Собираем финальный DTO ответа для фронтенда
     var articleDto = new ArticleReadDto
     {
         Id = article.Id,
@@ -205,11 +153,27 @@ public async Task<ActionResult<ArticleReadDto>> GetArticle(int id)
         AuthorName = article.Author?.Name ?? "Неизвестный автор",
         ParentId = article.ParentId,
         Categories = article.Categories.Select(c => c.Name).ToList(),
-        VirtualMachines = isUserAdmin ? allVms : new List<VirtualMachineDto>()
+        
+        // Отдаем массив объектов серверов только админу
+        VirtualMachines = isUserAdmin && article.VirtualMachines != null
+            ? article.VirtualMachines.Select(vm => new VirtualMachineDto
+              {
+                  Id = vm.Id,
+                  Name = vm.Name,
+                  IpAddress = vm.IpAddress,
+                  OS = vm.OS,
+                  Status = vm.Status
+              }).ToList()
+            : new List<VirtualMachineDto>(),
+
+        VirtualMachineIds = isUserAdmin && article.VirtualMachines != null
+            ? article.VirtualMachines.Select(vm => vm.Id).ToList()
+            : new List<int>()
     };
 
     return Ok(articleDto);
 }
+
 
 
 
@@ -392,16 +356,17 @@ public async Task<ActionResult<SidebarResponseDto>> GetSidebarTree(int id)
             article.Categories = categories;
         }
 
-        //Синхронизируем связи с виртуальными машинами («многие-ко-многим»)
-        article.VirtualMachines.Clear(); // Сбрасываем старые привязанные сервера для этой статьи
-        if (dto.VirtualMachineIds != null && dto.VirtualMachineIds.Any())
-        {
-            var selectedVms = await _context.VirtualMachines
-                .Where(vm => dto.VirtualMachineIds.Contains(vm.Id))
-                .ToListAsync();
-            
-            article.VirtualMachines = selectedVms;
-        }
+            article.VirtualMachines.Clear(); 
+            if (dto.VirtualMachineIds != null && dto.VirtualMachineIds.Count > 0)
+            {
+                var selectedVms = await _context.VirtualMachines
+                    .Where(vm => dto.VirtualMachineIds.Contains(vm.Id))
+                    .ToListAsync();
+                
+                article.VirtualMachines = selectedVms;
+                Console.WriteLine($"--> Успешно привязано машин к статье: {selectedVms.Count}"); // Лог для проверки в терминале C#
+            }
+
 
         try
         {
@@ -413,7 +378,7 @@ public async Task<ActionResult<SidebarResponseDto>> GetSidebarTree(int id)
             throw;
         }
 
-        return NoContent(); // 204 Успешно обновлено
+        return NoContent();
     }
 
     [HttpDelete("{id}")]
@@ -429,7 +394,7 @@ public async Task<ActionResult<SidebarResponseDto>> GetSidebarTree(int id)
         _context.Articles.Remove(article);
         await _context.SaveChangesAsync();
 
-        return NoContent(); // 204 Успешно удалено
+        return NoContent();
     }
 
     private async Task<bool> ArticleExists(int id)
@@ -450,7 +415,7 @@ public async Task<ActionResult<SidebarResponseDto>> GetSidebarTree(int id)
         // Загружаем историю изменений, включая имя редактора для вывода в React
         var history = await _context.HistoryOfChanges
             .Where(h => h.ArticleId == id)
-            .Include(h => h.Editor) // Убедитесь, что в модели HistoryOfChanges настроен Navigation Property к User
+            .Include(h => h.Editor)
             .OrderByDescending(h => h.ChangedAt) // Свежие изменения будут первыми в списке
             .Select(h => new
             {
