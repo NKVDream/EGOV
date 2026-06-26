@@ -8,11 +8,11 @@ services:
       POSTGRES_PASSWORD: your_secure_password #текущий пароль от БД
       POSTGRES_DB: EGOV_DB1 # Имя базы данных
     ports:
-      - "5432:5432" # Пробрасываем порт наружу, чтобы pgAdmin на ПК мог подключаться к контейнеру
+      - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data # Данные не сотрутся при перезапуске докера
+      - postgres_data:/var/lib/postgresql/data
 
-  #СЕРВИС БЭКЕНДА
+  #БЭК
   backend:
     build:
       context: ./backend
@@ -25,9 +25,9 @@ services:
       - ASPNETCORE_ENVIRONMENT=Production
       - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=EGOV_DB1;Username=postgres;Password=your_secure_password;
     depends_on:
-      - db # Бэкенд начнет запускаться только после того, как поднимется база данных
+      - db
 
-  #СЕРВИС ФРОНТЕНДА
+  #ФРОНТ
   frontend:
     build:
       context: ./frontend
