@@ -24,7 +24,6 @@ function HideOnScroll(props) {
   );
 }
 
-//Стили для строки поиска
 const Search = styled('div')(({ theme }) => ({
   position: 'relative',
   borderRadius: theme.shape.borderRadius,

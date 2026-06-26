@@ -24,9 +24,9 @@ public class HistoryOfChanges
     public int EditorId { get; set; }
     
     [ForeignKey(nameof(EditorId))]
-    public User Editor { get; set; } = null!; // Кто именно из админов внес правку
+    public User Editor { get; set; } = null!;
 
     [Column("changed_at")]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-    public DateTime ChangedAt { get; set; } // Дата изменения (заполняется базой данных)
+    public DateTime ChangedAt { get; set; }
 }

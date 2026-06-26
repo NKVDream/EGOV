@@ -28,23 +28,19 @@ export default function ReadArticle() {
   const navigate = useNavigate();
   const isAdmin = localStorage.getItem('role') === 'admin';
 
-  // Состояния для сайдбара
   const [sidebarTree, setSidebarTree] = useState([]); 
   const [expandedItems, setExpandedItems] = useState([]);
   const [activeArticleId, setActiveArticleId] = useState(parseInt(id, 10));
 
-  // Состояния для контента статьи и инфраструктуры
   const [article, setArticle] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [attachedVms, setAttachedVms] = useState([]);
 
-  // Состояния для управления историей изменений
   const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
   const [historyList, setHistoryList] = useState([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
 
-  // Стейт для закрытия/открытия сайдбара
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   useEffect(() => {
@@ -53,7 +49,6 @@ export default function ReadArticle() {
     }
   }, [id]);
 
-  // хук загрузка структуры сайдбара при смене ID в URL
   useEffect(() => {
     if (id) {
       fetch(`http://localhost:5170/api/Article/${id}/sidebar`)
@@ -78,7 +73,6 @@ export default function ReadArticle() {
     }
   }, [id]);
 
-  // Загрузка содержимого статьи и связанных виртуальных машин
   const fetchArticle = async () => {
     setLoading(true);
     setError('');
@@ -116,7 +110,6 @@ export default function ReadArticle() {
     fetchArticle();
   }, [activeArticleId]);
 
-  //Выгрузка статьи и инфраструктуры в PDF
   const handleDownloadPDF = async () => {
     const element = document.getElementById('article-pdf-content');
     if (!element) return;
@@ -124,11 +117,8 @@ export default function ReadArticle() {
     try {
       const html2pdf = (await import('html2pdf.js')).default;
 
-      // Получаем название статьи для имени файла
       const rawTitle = article?.title || article?.Title || 'article';
       const fileName = `${rawTitle.replace(/[^a-zA-Z0-9а-яА-Я ]/g, '')}.pdf`;
-
-      // Настройки печати
       const options = {
         margin: [15, 15, 15, 15],
         filename: fileName,
@@ -145,7 +135,6 @@ export default function ReadArticle() {
         }
       };
 
-      // Запускаем нативную сборку документа
       await html2pdf().set(options).from(element).save();
 
     } catch (err) {
@@ -154,14 +143,12 @@ export default function ReadArticle() {
     }
   };
 
-  // Обработчик клика по элементу в SidebarTree
   const handleNodeSelect = (selectedId) => {
     if (selectedId && selectedId !== activeArticleId) {
       navigate(`/article/${selectedId}`); 
     }
   };
 
-  // Функция загрузки истории изменений с бэкенда
   const fetchHistory = async () => {
     setLoadingHistory(true);
     const token = localStorage.getItem('token');
@@ -270,7 +257,7 @@ export default function ReadArticle() {
   <Layout>
     <Box sx={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f9f9f9', position: 'relative' }}>
       
-        {/* ЛЕВАЯ КОЛОНКА: Боковая панель */}
+  {/* ЛЕВАЯ КОЛОНКА: Боковая панель */}
   <Box sx={{ 
     width: isSidebarOpen ? '320px' : '0px',
     minWidth: isSidebarOpen ? { xs: '100%', md: '320px' } : '0px',
@@ -297,7 +284,6 @@ export default function ReadArticle() {
     
     {/* Само дерево статей */}
     <Box sx={{ flexGrow: 1, overflowY: 'auto' }}>
-      {/*Если данные пришли, рендерим компонент дерева */}
       {sidebarTree && sidebarTree.length > 0 ? (
         <SidebarTree 
           treeData={sidebarTree} 
@@ -306,7 +292,6 @@ export default function ReadArticle() {
           onNodeSelect={handleNodeSelect} 
         />
       ) : (
-        // Временная заглушка во время загрузки, чтобы сайдбар не выглядел абсолютно пустым
         <Typography variant="body2" color="text.secondary" sx={{ p: 3, textAlign: 'center' }}>
           Загрузка содержания...
         </Typography>
@@ -342,7 +327,6 @@ export default function ReadArticle() {
       }}>
       <Box sx={{ maxWidth: '850px', width: '100%', mx: 'auto', position: 'relative' }}>
           
-          {/* КНОПКА НАЗАД (Осталась снаружи, чтобы не попадать в PDF) */}
           <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/home')} sx={{ mb: 4, textTransform: 'none', fontWeight: 'bold' }} color="inherit">
             Назад
           </Button>
@@ -383,12 +367,10 @@ export default function ReadArticle() {
             )}
           </Box>
 
-          {/*Все, что внутри этого Box, html2canvas упакует в PDF-файл */}
           <Box id="article-pdf-content" sx={{ width: '100%', pt: 1, backgroundColor: 'transparent' }}>
 
             {/* БЛОК ЗАГОЛОВКА */}
             <Box sx={(theme) => ({ borderLeft: `6px solid ${theme.palette.primary.main}`, pl: 2.5, mb: 3, width: '100%' })}>
-              {/* pr увеличен, чтобы заголовок не врезался в добавленную кнопку PDF */}
               <Typography variant="h3" component="h1" fontWeight="bold" sx={{ fontSize: { xs: '2.2rem', md: '3rem' }, color: 'text.primary', lineHeight: 1.2, pr: isAdmin ? { xs: 24, md: 28 } : 6 }}>
                 {titleText}
               </Typography>
@@ -426,14 +408,13 @@ export default function ReadArticle() {
               wordBreak: 'break-word',
               px: 0,
               
-              // Базовые адаптивные стили для всех картинок статьи
               '& img': {
                 maxWidth: '100%',
                 height: 'auto',
                 borderRadius: '8px',
                 boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
                 my: 3,
-                display: 'inline-block' // inline-block позволяет родителю выравнивать картинку текстом
+                display: 'inline-block'
               },
               
               '& .ql-align-center': {
@@ -464,7 +445,6 @@ export default function ReadArticle() {
                 }
               },
               
-              // Оформление заголовков внутри текста
               '& h1, & h2, & h3': {
                 color: '#1e293b',
                 fontWeight: 'bold',
@@ -472,7 +452,6 @@ export default function ReadArticle() {
                 mb: 2
               },
               
-              // Оформление списков
               '& ul, & ol': {
                 pl: 3,
                 my: 2
@@ -506,17 +485,16 @@ export default function ReadArticle() {
                   const vmId = vm.id || vm.Id;
                   const vmStatus = (vm.status || vm.Status || 'active').toLowerCase();
                   
-                  // Определяем цвет левой полоски карточки в зависимости от статуса сервера
                   const getStatusColor = (status) => {
-                    if (status === 'active') return '#2e7d32'; // Зеленый
-                    if (status === 'stopped') return '#d32f2f'; // Красный
-                    return '#ed6c02'; // Оранжевый (Maintenance)
+                    if (status === 'active') return '#2e7d32';
+                    if (status === 'stopped') return '#d32f2f';
+                    return '#ed6c02';
                   };
 
                   return (
                     <Box 
                       key={vmId || idx}
-                      onClick={() => navigate('/vms')} // Клик по серверу переводит на общий реестр VM
+                      onClick={() => navigate('/vms')}
                       sx={{
                         display: 'flex',
                         flexDirection: 'column',
@@ -524,7 +502,7 @@ export default function ReadArticle() {
                         p: 2,
                         backgroundColor: '#ffffff',
                         border: '1px solid #e2e8f0',
-                        borderLeft: `4px solid ${getStatusColor(vmStatus)}`, // Цветная полоса статуса
+                        borderLeft: `4px solid ${getStatusColor(vmStatus)}`,
                         borderRadius: '8px',
                         cursor: 'pointer',
                         transition: 'all 0.2s ease-in-out',
@@ -548,7 +526,7 @@ export default function ReadArticle() {
                         />
                       </Box>
 
-                      {/* IP-Адрес (Моноширинный) */}
+                      {/* IP-Адрес*/}
                       <Typography variant="body2" sx={{ fontFamily: 'monospace', color: '#475569', mb: 0.5, fontWeight: 500 }}>
                         IP: {vm.ipAddress || vm.IpAddress}
                       </Typography>

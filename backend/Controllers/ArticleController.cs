@@ -80,23 +80,20 @@ public async Task<ActionResult<IEnumerable<ArticleReadDto>>> GetArticles()
         }
     }
 
-    //Загружаем корневые статьи со всеми их реальными данными (Авторы, Категории, Контент)
     var rootArticles = await _context.Articles
         .Where(a => a.ParentId == null)
         .Include(a => a.Author)
         .Include(a => a.Categories)
         .ToListAsync();
 
-    //Маппим корневые статьи в итоговый DTO и привязываем к ним собранные бесконечные деревья
     var articleDtos = rootArticles.Select(a => {
-        // Ищем корневой узел в нашей плоской структуре меню
         List<ArticleMenuDto> rootChildren = new();
         if (childrenGroupedByParent.TryGetValue(a.Id, out var children))
         {
             rootChildren = children;
             foreach (var child in rootChildren)
             {
-                BuildMenuTree(child); // Раскрываем дерево детей до самого конца
+                BuildMenuTree(child);
             }
         }
 
@@ -110,7 +107,7 @@ public async Task<ActionResult<IEnumerable<ArticleReadDto>>> GetArticles()
             AuthorId = a.AuthorId,
             AuthorName = a.Author?.Name ?? "Неизвестный автор",
             Categories = a.Categories.Select(c => c.Name).ToList(),
-            Children = rootChildren // Отдаем фронтенду полностью собранное бесконечное дерево
+            Children = rootChildren
         };
     }).ToList();
 
@@ -122,7 +119,6 @@ public async Task<ActionResult<IEnumerable<ArticleReadDto>>> GetArticles()
 [HttpGet("{id}")]
 public async Task<ActionResult<ArticleReadDto>> GetArticle(int id)
 {
-    // Загружаем статью строго с её собственными виртуальными машинами
     var article = await _context.Articles
         .Include(a => a.Author)
         .Include(a => a.Categories)
@@ -132,7 +128,6 @@ public async Task<ActionResult<ArticleReadDto>> GetArticle(int id)
 
     if (article == null) return NotFound();
 
-    // Безопасное извлечение роли из JWT-токена
     string? userRole = null;
     if (User.Identity != null && User.Identity.IsAuthenticated)
     {
@@ -141,7 +136,6 @@ public async Task<ActionResult<ArticleReadDto>> GetArticle(int id)
     }
     bool isUserAdmin = userRole == "admin";
 
-    // Собираем финальный DTO ответа для фронтенда
     var articleDto = new ArticleReadDto
     {
         Id = article.Id,
@@ -154,7 +148,6 @@ public async Task<ActionResult<ArticleReadDto>> GetArticle(int id)
         ParentId = article.ParentId,
         Categories = article.Categories.Select(c => c.Name).ToList(),
         
-        // Отдаем массив объектов серверов только админу
         VirtualMachines = isUserAdmin && article.VirtualMachines != null
             ? article.VirtualMachines.Select(vm => new VirtualMachineDto
               {
@@ -200,7 +193,6 @@ public async Task<ActionResult<SidebarResponseDto>> GetSidebarTree(int id)
 
     var dict = allNodes.ToDictionary(n => n.Id);
     
-    //ВЫЧИСЛЯЕМ ПУТЬ СТАТЬИ ДЛЯ АВТО-РАСКРЫТИЯ
     var expandedIds = new List<string>();
     int? currentParentId = currentArticle.ParentId;
     
@@ -210,7 +202,6 @@ public async Task<ActionResult<SidebarResponseDto>> GetSidebarTree(int id)
         currentParentId = pNode.ParentId;
     }
 
-    // Ищем корень всей ветки
     int rootId = currentArticle.Id;
     int? parentId = currentArticle.ParentId;
     while (parentId != null && dict.TryGetValue(parentId.Value, out var parentNode))
@@ -219,7 +210,6 @@ public async Task<ActionResult<SidebarResponseDto>> GetSidebarTree(int id)
         parentId = parentNode.ParentId;
     }
 
-    // Собираем дерево в памяти
     var rootNodes = new List<ArticleMenuDto>();
     foreach (var item in allNodes)
     {
@@ -264,7 +254,6 @@ public async Task<ActionResult<SidebarResponseDto>> GetSidebarTree(int id)
             UpdatedAt = DateTime.UtcNow
         };
 
-        //Привязываем категории к статье
         if (dto.CategoryIds != null && dto.CategoryIds.Any())
         {
             var categories = await _context.Categories
@@ -274,7 +263,6 @@ public async Task<ActionResult<SidebarResponseDto>> GetSidebarTree(int id)
             article.Categories = categories;
         }
 
-        //Привязываем виртуальные машины ко множественной промежуточной таблице
         if (dto.VirtualMachineIds != null && dto.VirtualMachineIds.Any())
         {
             var selectedVms = await _context.VirtualMachines
@@ -298,7 +286,6 @@ public async Task<ActionResult<SidebarResponseDto>> GetSidebarTree(int id)
             AuthorName = author.Name,
             Categories = article.Categories.Select(c => c.Name).ToList(),
             
-            //Маппим связанные машины в итоговый DTO ответа для фронтенда
             VirtualMachines = article.VirtualMachines.Select(vm => new VirtualMachineDto
             {
                 Id = vm.Id,
@@ -319,7 +306,7 @@ public async Task<ActionResult<SidebarResponseDto>> GetSidebarTree(int id)
     {
         var article = await _context.Articles
             .Include(a => a.Categories)
-            .Include(a => a.VirtualMachines) //Подгружаем связанные машины перед обновлением
+            .Include(a => a.VirtualMachines)
             .FirstOrDefaultAsync(a => a.Id == id);
 
         if (article == null)
@@ -327,7 +314,6 @@ public async Task<ActionResult<SidebarResponseDto>> GetSidebarTree(int id)
             return NotFound(new { message = $"Статья для обновления с ID {id} не найдена." });
         }
 
-        // Логируем старый контент в историю изменений, если текст поменялся
         if (article.Content != dto.Content)
         {
             var historyEntry = new HistoryOfChanges
@@ -345,7 +331,6 @@ public async Task<ActionResult<SidebarResponseDto>> GetSidebarTree(int id)
         article.ParentId = dto.ParentId;
         article.UpdatedAt = DateTime.UtcNow;
 
-        // Обновляем связи с категориями
         article.Categories.Clear(); 
         if (dto.CategoryIds != null && dto.CategoryIds.Any())
         {
@@ -364,7 +349,7 @@ public async Task<ActionResult<SidebarResponseDto>> GetSidebarTree(int id)
                     .ToListAsync();
                 
                 article.VirtualMachines = selectedVms;
-                Console.WriteLine($"--> Успешно привязано машин к статье: {selectedVms.Count}"); // Лог для проверки в терминале C#
+                Console.WriteLine($"--> Успешно привязано машин к статье: {selectedVms.Count}");
             }
 
 
@@ -412,7 +397,6 @@ public async Task<ActionResult<SidebarResponseDto>> GetSidebarTree(int id)
             return NotFound(new { message = $"Статья с ID {id} не найдена." });
         }
 
-        // Загружаем историю изменений, включая имя редактора для вывода в React
         var history = await _context.HistoryOfChanges
             .Where(h => h.ArticleId == id)
             .Include(h => h.Editor)
@@ -442,15 +426,12 @@ public async Task<ActionResult<SidebarResponseDto>> GetSidebarTree(int id)
             return NotFound(new { message = $"Запись в истории с ID {historyId} не найдена." });
         }
 
-        // Находим оригинальную статью, к которой относится этот слепок
         var article = await _context.Articles.FindAsync(historyEntry.ArticleId);
         if (article == null)
         {
             return NotFound(new { message = "Оригинальная статья для этой версии больше не существует." });
         }
 
-        // Перед тем как перетереть текущие данные, сохраняем их текущее состояние в историю.
-        // Это позволит админу вернуться назад, если он откатился по ошибке!
         if (article.Content != historyEntry.OldContent)
         {
             var currentTextBackup = new HistoryOfChanges

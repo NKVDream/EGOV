@@ -36,7 +36,7 @@ export default function Login() {
         throw new Error(data.message || 'Ошибка авторизации');
       }
 
-      localStorage.setItem('token', data.token);// Сохраняем сессию в браузере
+      localStorage.setItem('token', data.token);
       localStorage.setItem('username', data.username);
       localStorage.setItem('role', data.role);
 
@@ -121,8 +121,8 @@ export default function Login() {
           variant="contained" 
           color="primary" 
           fullWidth 
-          sx={{ mt: 2, mb: 2 }} // Отступы: сверху и снизу
-          disabled={isLoading} //блокирует кнопку при загрузке
+          sx={{ mt: 2, mb: 2 }}
+          disabled={isLoading}
         >
           Войти
         </Button>

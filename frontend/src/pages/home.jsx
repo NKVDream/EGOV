@@ -9,7 +9,6 @@ export default function Home() {
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Загрузка статей с сервера
   const fetchArticles = async () => {
     try {
       const response = await fetch('http://localhost:5170/api/Article');

@@ -3,7 +3,6 @@ import { Box, Typography } from '@mui/material';
 
 export function LineSidebarTree({ treeData, onNodeSelect }) {
     
-    // Рекурсивный рендер элементов
     const renderNodesFlat = (nodes) => {
         if (!Array.isArray(nodes)) return null;
         
@@ -28,7 +27,7 @@ export function LineSidebarTree({ treeData, onNodeSelect }) {
                             position: 'relative', 
                             minHeight: '32px',
                             cursor: 'pointer',
-                            pl: '24px', // Отступ под горизонтальную ветку
+                            pl: '24px',
                             borderRadius: '4px',
                             '&:hover': {
                                 backgroundColor: 'rgba(25, 118, 210, 0.04)',
@@ -42,7 +41,6 @@ export function LineSidebarTree({ treeData, onNodeSelect }) {
                                 position: 'absolute', 
                                 left: 0, 
                                 top: 0, 
-                                // Если это последний элемент в списке, доводим линию только до центра (середины) строки
                                 height: isLast ? '16px' : '100%', 
                                 width: '1px', 
                                 backgroundColor: '#cbd5e1',
@@ -70,15 +68,14 @@ export function LineSidebarTree({ treeData, onNodeSelect }) {
                     {Array.isArray(currentChildren) && currentChildren.length > 0 && (
                         <Box 
                             sx={{ 
-                                pl: '20px', // Сдвиг для детей вправо
+                                pl: '20px',
                                 position: 'relative',
-                                // Если родитель не последний в списке, проводим прямую линию вниз вдоль всей группы его детей
                                 '&::before': {
                                     content: '""',
                                     position: 'absolute',
                                     left: 0,
                                     top: 0,
-                                    bottom: isLast ? '16px' : 0, // Аккуратно подрезаем хвост в самом конце темы
+                                    bottom: isLast ? '16px' : 0,
                                     width: '1px',
                                     backgroundColor: isLast ? 'transparent' : '#cbd5e1',
                                     zIndex: 1
@@ -102,7 +99,7 @@ export function LineSidebarTree({ treeData, onNodeSelect }) {
                 width: '100%', 
                 boxSizing: 'border-box', 
                 pt: 0.5,
-                pl: '8px', // Базовый отступ для всей схемы
+                pl: '8px',
                 position: 'relative'
             }}
         >

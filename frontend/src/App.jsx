@@ -7,7 +7,6 @@ import ReadArticle from './pages/readArticle';
 import VirtualMachinesList from './pages/VirtualMachinesList';
 import CreateVirtualMachine from './pages/CreateVirtualMachine'; 
 
-// Не пустит без токена
 function ProtectedRoute({ children }) {
   const token = localStorage.getItem('token');
   
@@ -29,7 +28,7 @@ export default function App() {
         <Route path="/article/edit/:id" element={<CreateArticle />} />
         <Route path="/article/:id" element={<ReadArticle />} />
 
-        {/* Защищенный маршрут: главная страница со статьями */}
+        {/* Защищенные маршруты */}
         <Route 
           path="/home" 
           element={
@@ -38,8 +37,6 @@ export default function App() {
             </ProtectedRoute>
           } 
         />
-
-        {/* Защищеный маршрут: страница с виртуальными машинами и страница создания вм*/}
         <Route 
           path="/vms" 
           element={

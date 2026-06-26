@@ -9,26 +9,21 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import Layout from '../components/Layout';
 
 export default function CreateVirtualMachine() {
-  const { id } = useParams(); // 🟢 Ловим ID из URL
+  const { id } = useParams();
   const navigate = useNavigate();
   const isEditMode = Boolean(id); // Флаг: true — редактирование, false — создание
 
-  // Состояния для полей формы
   const [name, setName] = useState('');
   const [ipAddress, setIpAddress] = useState('');
   const [os, setOs] = useState('');
   const [status, setStatus] = useState('Active');
-  
-  // 🟢 Изменено: теперь храним массив выбранных ID подсистем для связи многие-ко-многим
-  const [selectedArticleIds, setSelectedArticleIds] = useState([]); 
 
-  // Системные состояния
+  const [selectedArticleIds, setSelectedArticleIds] = useState([]); 
   const [articlesList, setArticlesList] = useState([]); 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  // 1. Загружаем список всех доступных подсистем для выпадающего меню
   useEffect(() => {
     async function loadArticles() {
       try {
@@ -43,7 +38,6 @@ export default function CreateVirtualMachine() {
     }
     loadArticles();
 
-    // 2. 🟢 Если включен режим РЕДАКТИРОВАНИЯ — автоматически скачиваем старые данные машины
     if (isEditMode) {
       async function fetchVmData() {
         setLoading(true);
@@ -51,13 +45,11 @@ export default function CreateVirtualMachine() {
           const response = await fetch(`http://localhost:5170/api/VirtualMachine/${id}`);
           if (response.ok) {
             const data = await response.json();
-            // Автоматически подставляем данные в поля формы
             setName(data.name || data.Name || '');
             setIpAddress(data.ipAddress || data.IpAddress || '');
             setOs(data.os || data.OS || '');
             setStatus(data.status || data.Status || 'Active');
-            
-            // Зажигаем галочки на ранее привязанных статьях
+          
             const articleIds = data.articleIds || data.ArticleIds || [];
             setSelectedArticleIds(articleIds);
           } else {
@@ -73,7 +65,6 @@ export default function CreateVirtualMachine() {
     }
   }, [id, isEditMode]);
 
-  // 3. Обработчик отправки формы (создание или обновление)
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -91,12 +82,11 @@ export default function CreateVirtualMachine() {
       ipAddress: ipAddress.trim(),
       os: os.trim() || null,
       status: status,
-      articleIds: selectedArticleIds // 🟢 Отправляем массив ID на бэкенд
+      articleIds: selectedArticleIds
     };
 
     setLoading(true);
     try {
-      // Меняем метод и URL в зависимости от режима работы страницы
       const url = isEditMode 
         ? `http://localhost:5170/api/VirtualMachine/${id}` 
         : 'http://localhost:5170/api/VirtualMachine';
@@ -216,8 +206,6 @@ export default function CreateVirtualMachine() {
                 <MenuItem value="Maintenance">Maintenance (Обслуживание)</MenuItem>
               </Select>
             </FormControl>
-
-            {/* МНОЖЕСТВЕННЫЙ ВЫБОР СВЯЗАННЫХ ПОДСИСТЕМ (Многие-ко-многим) */}
 
             {/* КНОПКИ УПРАВЛЕНИЯ ФОРМОЙ */}
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 1 }}>

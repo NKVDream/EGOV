@@ -21,7 +21,7 @@ public class CategoryController : ControllerBase
     public async Task<ActionResult<IEnumerable<Category>>> GetCategories()
     {
         return await _context.Categories
-            .Include(c => c.Articles) // Показываем, какие статьи привязаны к категории
+            .Include(c => c.Articles)
             .AsNoTracking()
             .ToListAsync();
     }
@@ -50,7 +50,7 @@ public class CategoryController : ControllerBase
             return BadRequest(new { message = "Название категории не может быть пустым." });
         }
 
-        var nameExists = await _context.Categories.AnyAsync(c => c.Name.ToLower() == category.Name.ToLower());// Проверяем уникальность имени
+        var nameExists = await _context.Categories.AnyAsync(c => c.Name.ToLower() == category.Name.ToLower());
         if (nameExists)
         {
             return BadRequest(new { message = $"Категория с названием '{category.Name}' уже существует." });
@@ -76,7 +76,7 @@ public class CategoryController : ControllerBase
             return BadRequest(new { message = "Название категории не может быть пустым." });
         }
 
-        var nameExists = await _context.Categories // Проверяем, не занято ли новое имя другой категорией
+        var nameExists = await _context.Categories
             .AnyAsync(c => c.Name.ToLower() == updatedCategory.Name.ToLower() && c.Id != id);
             
         if (nameExists)
@@ -104,7 +104,7 @@ public class CategoryController : ControllerBase
     public async Task<IActionResult> DeleteCategory(int id)
     {
         var category = await _context.Categories
-            .Include(c => c.Articles) // Загружаем статьи, чтобы проверить их наличие
+            .Include(c => c.Articles)
             .FirstOrDefaultAsync(c => c.Id == id);
 
         if (category == null)
@@ -112,7 +112,6 @@ public class CategoryController : ControllerBase
             return NotFound(new { message = $"Категория с ID {id} не найдена." });
         }
 
-        // Если к категории привязаны статьи, не даем ее удалить, пока админ не уберет ее из статей.
         if (category.Articles.Any())
         {
             return BadRequest(new { 

@@ -1,19 +1,18 @@
 services:
-  #СЕРВИС БАЗЫ ДАННЫХ POSTGRESQL
   db:
     image: postgres:15-alpine
     container_name: egov_postgres_db
     restart: always
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: your_secure_password # Укажите ваш текущий пароль от БД
-      POSTGRES_DB: EGOV_DB1 # Имя вашей базы данных
+      POSTGRES_PASSWORD: your_secure_password #текущий пароль от БД
+      POSTGRES_DB: EGOV_DB1 # Имя базы данных
     ports:
       - "5432:5432" # Пробрасываем порт наружу, чтобы pgAdmin на ПК мог подключаться к контейнеру
     volumes:
       - postgres_data:/var/lib/postgresql/data # Данные не сотрутся при перезапуске докера
 
-  #СЕРВИС БЭКЕНДА (C# Web API)
+  #СЕРВИС БЭКЕНДА
   backend:
     build:
       context: ./backend
@@ -24,12 +23,11 @@ services:
       - "5170:5170"
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      # Изменяем строку подключения: вместо localhost пишем имя сервиса "db", докер сам свяжет их по внутренней сети
       - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=EGOV_DB1;Username=postgres;Password=your_secure_password;
     depends_on:
       - db # Бэкенд начнет запускаться только после того, как поднимется база данных
 
-  #СЕРВИС ФРОНТЕНДА (React App)
+  #СЕРВИС ФРОНТЕНДА
   frontend:
     build:
       context: ./frontend
@@ -42,4 +40,4 @@ services:
       - backend
 
 volumes:
-  postgres_data: # Объявляем постоянное хранилище для базы данных
+  postgres_data:

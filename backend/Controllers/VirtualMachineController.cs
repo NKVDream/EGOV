@@ -18,7 +18,6 @@ public class VirtualMachineController : ControllerBase
         _context = context;
     }
 
-    // 1. Получить ВСЕ машины (с массивом связанных статей)
     [HttpGet]
     public async Task<ActionResult<IEnumerable<object>>> GetVirtualMachines()
     {
@@ -38,7 +37,6 @@ public class VirtualMachineController : ControllerBase
         return Ok(vms);
     }
 
-    // 2. 🟢 НОВЫЙ МЕТОД: Получить ОДНУ машину по ID (для автозаполнения формы редактирования)
     [HttpGet("{id}")]
     public async Task<ActionResult<object>> GetVirtualMachine(int id)
     {
@@ -55,12 +53,10 @@ public class VirtualMachineController : ControllerBase
             IpAddress = vm.IpAddress,
             OS = vm.OS,
             Status = vm.Status,
-            // Отдаем только массив ID привязанных статей, чтобы фронтенд сразу зажег галочки
             ArticleIds = vm.Articles.Select(a => a.Id).ToList() 
         });
     }
 
-    // 3. Создать новую машину со множественной привязкой
     [HttpPost]
     [Authorize(Roles = "admin")]
     public async Task<IActionResult> CreateVM([FromBody] VirtualMachineCreateDto dto)
@@ -86,7 +82,6 @@ public class VirtualMachineController : ControllerBase
         return Ok(vm);
     }
 
-    // 4. 🟢 НОВЫЙ МЕТОД: Редактировать (Обновить) параметры VM
     [HttpPut("{id}")]
     [Authorize(Roles = "admin")]
     public async Task<IActionResult> UpdateVM(int id, [FromBody] VirtualMachineCreateDto dto)
@@ -97,14 +92,12 @@ public class VirtualMachineController : ControllerBase
 
         if (vm == null) return NotFound(new { message = "Машина не найдена" });
 
-        // Обновляем текстовые поля
         vm.Name = dto.Name;
         vm.IpAddress = dto.IpAddress;
         vm.OS = dto.OS;
         vm.Status = dto.Status;
 
-        // Обновляем связи в промежуточной таблице
-        vm.Articles.Clear(); // Стираем старые привязки
+        vm.Articles.Clear();
         if (dto.ArticleIds != null && dto.ArticleIds.Any())
         {
             var selectedArticles = await _context.Articles
@@ -117,7 +110,6 @@ public class VirtualMachineController : ControllerBase
         return NoContent();
     }
 
-    // 5. Удалить машину
     [HttpDelete("{id}")]
     [Authorize(Roles = "admin")]
     public async Task<IActionResult> DeleteVM(int id)

@@ -19,7 +19,6 @@ namespace Egov.Models
         [Column("description")]
         public string? Description { get; set; }
 
-        // Обратная навигационная связь с ролями
         public List<Role> Roles { get; set; } = new();
     }
 }

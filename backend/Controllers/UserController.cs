@@ -107,11 +107,11 @@ public class UserController : ControllerBase
     public async Task<ActionResult<IEnumerable<UserReadDto>>> GetUsers()
     {
         var users = await _context.Users
-            .Include(u => u.Role) // Подгружаем роль из БД
+            .Include(u => u.Role)
             .AsNoTracking()
             .ToListAsync();
 
-        var userDtos = users.Select(u => new UserReadDto// Маппинг: перекладываем данные из тяжелых моделей в легкие DTO
+        var userDtos = users.Select(u => new UserReadDto
         {
             Id = u.Id,
             Name = u.Name,
@@ -135,7 +135,6 @@ public class UserController : ControllerBase
             return NotFound(new { message = $"Пользователь с ID {id} не найден." });
         }
 
-        // Превращаем в DTO
         var userDto = new UserReadDto
         {
             Id = user.Id,

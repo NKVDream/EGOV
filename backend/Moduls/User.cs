@@ -31,7 +31,6 @@ public class User
     [ForeignKey(nameof(RoleId))]
     public Role Role { get; set; } = null!;
 
-    // Навигационное свойство: один пользователь (админ) может написать много статей
     public List<Article> Articles { get; set; } = new();
 }
 

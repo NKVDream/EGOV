@@ -16,23 +16,20 @@ export default function CreateArticle() {
   
   const isEditMode = Boolean(id);
 
-  // Состояния для полей формы
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [parentId, setParentId] = useState(null);
   const [parentTitle, setParentTitle] = useState('');
 
-  const [vmsList, setVmsList] = useState([]); // Все машины из базы данных
-  const [selectedVmIds, setSelectedVmIds] = useState([]); // Выбранные ID машин для этой статьи
+  const [vmsList, setVmsList] = useState([]);
+  const [selectedVmIds, setSelectedVmIds] = useState([]);
 
-  // Системные состояния
   const [categoriesList, setCategoriesList] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  //Извлекаем parentId из URL при создании подстатьи
   useEffect(() => {
     if (!isEditMode) {
       const queryParams = new URLSearchParams(location.search);
@@ -94,7 +91,6 @@ export default function CreateArticle() {
           setSelectedCategories(data.categoryIds || data.CategoryIds);
         }
 
-        // Безопасно извлекаем ID виртуальных машин для галочек
         let vmIds = [];
         if (data.virtualMachineIds || data.VirtualMachineIds) {
           vmIds = data.virtualMachineIds || data.VirtualMachineIds;
@@ -119,7 +115,6 @@ export default function CreateArticle() {
 }
 }, [id, isEditMode]);
 
-  //Обработчик отправки формы
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -133,7 +128,6 @@ export default function CreateArticle() {
     const token = localStorage.getItem('token'); 
     const authorId = parseInt(localStorage.getItem('userId')) || 1;
 
-    // Собираем объект DTO
     const articleDto = {
       title: title.trim(),
       content: content.trim(),
@@ -267,7 +261,7 @@ export default function CreateArticle() {
             </Select>
           </FormControl>
 
-          {/* МНОЖЕСТВЕННЫЙ ВЫБОР ВИРТУАЛЬНЫХ МАШИН ДЛЯ ПОДСИСТЕМЫ */}
+          {/*ВЫБОР ВИРТУАЛЬНЫХ МАШИН */}
           <FormControl fullWidth sx={{ backgroundColor: '#ffffff', borderRadius: 1 }}>
             <InputLabel id="vms-multiple-label">Виртуальные машины инфраструктуры</InputLabel>
             <Select
@@ -311,9 +305,8 @@ export default function CreateArticle() {
             sx={{ 
               width: '100%', 
               backgroundColor: '#ffffff', 
-              borderRadius: 1, // Сохраняем borderRadius: 1 как у TextField
+              borderRadius: 1,
               mt: 1,
-              // Блокируем интерфейс редактора визуально, если идет отправка/загрузка данных (loading)
               opacity: loading ? 0.6 : 1,
               pointerEvents: loading ? 'none' : 'auto',
             }}
@@ -333,7 +326,6 @@ export default function CreateArticle() {
 
             <TextEditor 
               value={content} 
-              // Напрямую передаем HTML-строку из редактора в ваш существующий стейт setContent
               onChange={(htmlContent) => setContent(htmlContent)} 
               placeholder="содержание"
             />

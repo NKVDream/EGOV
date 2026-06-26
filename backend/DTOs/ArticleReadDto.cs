@@ -18,6 +18,4 @@ public class ArticleReadDto
 
     [JsonPropertyName("virtualMachineIds")] 
     public List<int> VirtualMachineIds { get; set; } = new List<int>();
-
-
 }

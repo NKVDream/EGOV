@@ -16,7 +16,6 @@ public class ApplicationDbContext : DbContext
     public DbSet<Permission> Permissions{get;set;}
     public DbSet<Role>Roles{get; set;}
     public DbSet<HistoryOfChanges>HistoryOfChanges{get; set;}
-    // Внутри класса ApplicationDbContext:
     public DbSet<VirtualMachine> VirtualMachines { get; set; }
 
 

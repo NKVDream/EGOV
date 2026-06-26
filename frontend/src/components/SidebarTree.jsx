@@ -5,7 +5,6 @@ import { Box, Typography } from '@mui/material';
 
 export function SidebarTree({ treeData, activeId, onNodeSelect, expandedItems }) {
     
-    // Рекурсивный рендер элементов дерева
     const renderTreeNodes = (nodes) => {
         if (!Array.isArray(nodes)) return null;
         
@@ -21,7 +20,6 @@ export function SidebarTree({ treeData, activeId, onNodeSelect, expandedItems })
                     key={currentId}
                     itemId={currentId.toString()}
                     label={currentTitle}
-                    // Убрали onClick отсюда, чтобы не было конфликта событий с Material UI
                     sx={{
                         borderBottom: '1px solid rgba(0, 0, 0, 0.05)',
                         '& .MuiTreeItem-content': {
@@ -42,7 +40,6 @@ export function SidebarTree({ treeData, activeId, onNodeSelect, expandedItems })
         });
     };
 
-    //ИСПРАВЛЕНО: Material UI сам передает ID выбранного элемента при клике на текст
     const handleSelectedItemsChange = (event, itemId) => {
         if (itemId && onNodeSelect) {
             onNodeSelect(parseInt(itemId, 10));
@@ -60,7 +57,7 @@ export function SidebarTree({ treeData, activeId, onNodeSelect, expandedItems })
             
             <SimpleTreeView
                 selectedItems={activeId ? activeId.toString() : null}
-                onSelectedItemsChange={handleSelectedItemsChange} // Ловим событие клика по статье здесь
+                onSelectedItemsChange={handleSelectedItemsChange}
                 defaultExpandedItems={Array.isArray(expandedItems) ? expandedItems : []}
             >
                 {renderTreeNodes(treeData)}

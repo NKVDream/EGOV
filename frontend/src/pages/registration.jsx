@@ -42,7 +42,6 @@ export default function Registration() {
         throw new Error(data.message || 'Ошибка регистрации');
       }
 
-      // После успешной регистрации обычно отправляют на страницу входа
       navigate('/login'); 
     } catch (err) {
       setError(err.message);

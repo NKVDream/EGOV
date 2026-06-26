@@ -8,5 +8,5 @@ public class VirtualMachineDto
     public string? OS { get; set; }
     public string Status { get; set; } = null!;
     public int? ArticleId { get; set; }
-    public string? ArticleTitle { get; set; } // Чтобы на странице VM видеть, к чему она привязана
+    public string? ArticleTitle { get; set; }
 }

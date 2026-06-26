@@ -20,7 +20,6 @@ export default function VirtualMachinesList() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  //Загрузка данных обо всех виртуальных машинах с бэкенда
   const fetchVirtualMachines = async () => {
     setLoading(true);
     setError('');
@@ -47,13 +46,11 @@ export default function VirtualMachinesList() {
         return;
     }
 
-    // Если всё хорошо и это админ — загружаем список машин
     fetchVirtualMachines();
     }, [navigate]);
 
-  //ункция удаления виртуальной машины администратором
   const handleDeleteVM = async (e, vmId, vmName) => {
-    e.stopPropagation(); // Изолируем клик, чтобы не срабатывало нажатие на саму строку таблицы
+    e.stopPropagation();
     if (!window.confirm(`Вы уверены, что хотите удалить виртуальную машину "${vmName}"?`)) return;
     
     const token = localStorage.getItem('token');
@@ -72,7 +69,7 @@ export default function VirtualMachinesList() {
       console.error(err);
     }
   };
-  //Функция для цветного отображения статусов серверов
+
   const getStatusChip = (status) => {
     const currentStatus = status?.toLowerCase() || 'active';
     switch (currentStatus) {
@@ -165,7 +162,6 @@ export default function VirtualMachinesList() {
                           '&:hover .vm-admin-box': { opacity: 1 }
                         }}
                       >
-                        {/* Имя машины + Кнопки админа */}
                         <TableCell component="th" scope="row" sx={{ fontWeight: 600, minWidth: '220px' }}>
                           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -209,7 +205,6 @@ export default function VirtualMachinesList() {
                           {getStatusChip(vm.status || vm.Status)}
                         </TableCell>
                         
-                        {/* Вывод связанных подсистем списком чипов */}
                         <TableCell>
                           {articles.length > 0 ? (
                             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>

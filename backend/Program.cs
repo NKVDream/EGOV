@@ -27,7 +27,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     
     options.UseNpgsql(connectionString));
 
-builder.Services.AddScoped<JwtService>(); // Серивис регистрации токенов
+builder.Services.AddScoped<JwtService>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -55,7 +55,7 @@ builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new OpenApiInfo { Title = "Egov API", Version = "v1" });
 
-    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme//схема безопасности JWT Bearer для свагера
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
         Type = SecuritySchemeType.ApiKey,
@@ -65,7 +65,6 @@ builder.Services.AddSwaggerGen(options =>
         Description = "Введите JWT-токен в формате: Bearer {ваш_токен}"
     });
 
-    // Делаем так, чтобы Swagger прикреплял токен к защищенным запросам
     options.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
         {
@@ -90,7 +89,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI(c =>
     {
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "Egov API v1");
-        c.RoutePrefix = string.Empty; // Открывает Swagger сразу на главной странице
+        c.RoutePrefix = string.Empty;
     });
 }
 
@@ -98,8 +97,8 @@ app.UseCors("AllowReact");
 
 app.UseHttpsRedirection();
 
-app.UseAuthentication(); //кто пользак
-app.UseAuthorization();//что ему можно
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllers();
 
